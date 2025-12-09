@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from io import BytesIO 
 
-# --- 1. PARÁMETROS DE AUDITORÍA (REGLAS DE NEGOCIO LQF) ---
+# --- 1. CONFIGURACIÓN DE PÁGINA Y PARÁMETROS ---
 
 # 🔴 LISTA DE CÓDIGOS CONTROLADOS (MÁXIMO 5% DE DESCUENTO)
 codigos_controlados = [
@@ -54,43 +54,33 @@ def ejecutar_auditoria(df_ventas, df_precios):
     
     
     # 3. Auditoría por Precio de Lista (Listado de Precios)
-    # Normalizar y limpiar la tabla de precios
     df_precios.columns = df_precios.columns.str.strip()
-    
-    # Renombrar columnas específicas del listado de precios (Incluyendo IVA)
     price_column_mapping = {
         'Codigo': 'Codigo', 
-        'IVA': 'IVA_Lista', # Renombramos para evitar confusión con el IVA de Factura
+        'IVA': 'IVA_Lista', 
         'Precio de Factura con Descuento': 'Precio_Farmacia_Target', 
         'Precio Intercompany': 'Precio_Intercompany_Target'
     }
     df_precios = df_precios.rename(columns=price_column_mapping)
     
-    # Seleccionar solo las columnas necesarias y asegurar formatos
     cols_a_unir = ['Codigo', 'IVA_Lista', 'Precio_Farmacia_Target', 'Precio_Intercompany_Target'] 
     df_precios = df_precios[cols_a_unir]
     df_precios['Codigo'] = df_precios['Codigo'].astype(str)
     df_precios['IVA_Lista'] = pd.to_numeric(df_precios['IVA_Lista'], errors='coerce').fillna(0) 
     
-    # Merge de las dos tablas.
     df_audit = pd.merge(df_audit, df_precios, on='Codigo', how='left')
     
     # --- AJUSTE CRÍTICO: QUITAR EL IVA DEL PRECIO OBJETIVO (PARA COMPARAR CON NETO) ---
-    
-    # Calcular el factor de ajuste (1 + IVA)
     df_audit['Factor_IVA'] = 1 + df_audit['IVA_Lista']
-    # Si el IVA es 0, el Factor_IVA es 1. Usamos NaN si es <= 1 para manejar la división condicional.
     df_audit['Factor_IVA'] = np.where(df_audit['Factor_IVA'] <= 1, np.nan, df_audit['Factor_IVA']) 
 
-    # Asegurar que las columnas existan y sean numéricas antes del cálculo
     df_audit['Precio_Farmacia_Target'] = pd.to_numeric(df_audit['Precio_Farmacia_Target'], errors='coerce').fillna(0)
     df_audit['Precio_Intercompany_Target'] = pd.to_numeric(df_audit['Precio_Intercompany_Target'], errors='coerce').fillna(0)
     
-    # Calcular precios objetivos SIN IVA
     df_audit['Precio_Farmacia_Target_SIN_IVA'] = np.where(
         df_audit['Factor_IVA'].notna(), 
         df_audit['Precio_Farmacia_Target'] / df_audit['Factor_IVA'],
-        df_audit['Precio_Farmacia_Target'] # Si Factor_IVA es NaN (IVA es 0), no dividimos
+        df_audit['Precio_Farmacia_Target'] 
     )
     
     df_audit['Precio_Intercompany_Target_SIN_IVA'] = np.where(
@@ -99,21 +89,17 @@ def ejecutar_auditoria(df_ventas, df_precios):
         df_audit['Precio_Intercompany_Target']
     )
     
-    # Rellenar con 0
     df_audit['Precio_Farmacia_Target_SIN_IVA'] = df_audit['Precio_Farmacia_Target_SIN_IVA'].fillna(0)
     df_audit['Precio_Intercompany_Target_SIN_IVA'] = df_audit['Precio_Intercompany_Target_SIN_IVA'].fillna(0)
     
-    # Lógica para seleccionar el precio objetivo final (SIN IVA)
     df_audit['Precio_Objetivo'] = np.where(
         (df_audit['Solicitante'] == CLIENTE_200046) | (df_audit['Solicitante'] == CLIENTE_200173),
         df_audit['Precio_Intercompany_Target_SIN_IVA'],
         df_audit['Precio_Farmacia_Target_SIN_IVA']
     )
     
-    # Calcular el precio neto por unidad en la factura
     df_audit['Precio_Unitario_Neto_Factura'] = pd.to_numeric(df_audit['Valor neto'], errors='coerce') / pd.to_numeric(df_audit['Cant'], errors='coerce')
     
-    # Calcular desviación respecto al precio objetivo (Target)
     df_audit['Desvío_Precio_Lista'] = np.where(
         (df_audit['Precio_Objetivo'] > 0) & (df_audit['Precio_Unitario_Neto_Factura'].notna()), 
         ((df_audit['Precio_Unitario_Neto_Factura'] / df_audit['Precio_Objetivo']) - 1) * 100, 
@@ -122,20 +108,13 @@ def ejecutar_auditoria(df_ventas, df_precios):
 
     # 4. Lógica de Prioridad de Descuentos (np.select)
     condiciones = [
-        # 1. Empleados/Médicos con desvío
         ((df_audit['Zona de Venta'] == 'EMPLEADOS LQF') & (df_audit['Almacen'] != ALMACEN_EMPLEADOS_PERMITIDO) & (df_audit['% Desc'] > DESC_MAX_EMPLEADOS)) | \
         ((df_audit['Zona de Venta'] == 'MEDICOS PARTICULARES') & (df_audit['% Desc'] > DESC_MAX_EMPLEADOS)),
-        # 2. Alerta por Precio Objetivo bajo (por debajo del -2% de tolerancia)
         (df_audit['Desvío_Precio_Lista'] < -MAX_PRECIO_DESVIACION) & (df_audit['Desvío_Precio_Lista'].notna()),
-        # 3. Controlados
         (df_audit['Codigo'].isin(codigos_controlados)) & (df_audit['% Desc'] > DESC_MAX_CONTROLADOS),
-        # 4. Intercompany 200046
         (df_audit['Solicitante'] == CLIENTE_200046) & (df_audit['% Desc'] > DESC_INTERCOMPANY_200046),
-        # 5. Intercompany 200173
         (df_audit['Solicitante'] == CLIENTE_200173) & (df_audit['% Desc'] > DESC_INTERCOMPANY_200173), 
-        # 6. Nutricia/Bebelac
-        (df_audit['Jerarquia'].isin(marcas_6_porciento)) & (df_audit['% Desc'] > DESC_MAX_NUTRICIA_BEBELAC),
-        # 7. General
+        (df_audit['Jerarquia'].isin(marcas_6_porciento)) & (df_audit['% Desc'] > DESC_MAX_NUTRICIA_BEBELAC), 
         (df_audit['% Desc'] > DESC_MAX_GENERAL)
     ]
     etiquetas_alerta = [
@@ -148,7 +127,6 @@ def ejecutar_auditoria(df_ventas, df_precios):
         '⚠️ General (>7%) Excedido'
     ]
 
-
     df_audit['Alerta_Descuento'] = np.select(condiciones, etiquetas_alerta, default='✅ OK')
     desvios_encontrados = df_audit[df_audit['Alerta_Descuento'] != '✅ OK']
     
@@ -157,16 +135,9 @@ def ejecutar_auditoria(df_ventas, df_precios):
 
 # --- FUNCIÓN DE EXPORTACIÓN A EXCEL (XLSX) ---
 def to_excel(df):
-    """
-    Convierte un DataFrame de pandas a un archivo Excel (XLSX) en memoria
-    para usarlo con st.download_button.
-    """
     output = BytesIO()
-    # Usamos pd.ExcelWriter para generar el archivo XLSX
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Reporte Auditoria')
-    
-    # Mover el puntero del buffer al inicio y leer todos los bytes generados
     output.seek(0)
     return output.read() 
 
@@ -176,11 +147,11 @@ def to_excel(df):
 st.set_page_config(page_title="Auditoría Continua de Precios LQF", layout="wide")
 st.title("🛡️ Dashboard de Auditoría de Desviaciones de Precios - LQF")
 
-# --- CARGA DE ARCHIVOS EN LA BARRA LATERAL ---
+# --- CARGA DE ARCHIVOS EN LA BARRA LATERAL (SIEMPRE VISIBLE) ---
 with st.sidebar:
     st.header("⚙️ Carga de Reporte Único")
     
-    # ÚNICO UPLOADER DE ARCHIVO XLSX
+    # UPLOADER DE ARCHIVO
     uploaded_file = st.file_uploader(
         "1. Subir Archivo Único de Auditoría (.xlsx)", 
         type=['xlsx'], 
@@ -189,23 +160,41 @@ with st.sidebar:
     )
     
     st.markdown("---")
-    st.info("Utilice los filtros del cuerpo principal para ajustar el alcance de la auditoría.")
+    st.info("Utilice los filtros del cuerpo principal para ajustar el alcance de la auditoría una vez cargado el archivo.")
 
-# --- LÓGICA DE PROCESAMIENTO Y DASHBOARD ---
-if uploaded_file is not None:
+
+# --- LÓGICA DE PANTALLA CONDICIONAL ---
+if uploaded_file is None:
+    # ----------------------------------------------------
+    # ESTADO 1: PANTALLA DE BIENVENIDA (NO HAY ARCHIVO)
+    # ----------------------------------------------------
+    st.image("https://i.imgur.com/gK9q0vP.png", width=150) # Placeholder de imagen, puedes reemplazarlo
+    st.markdown("# ¡Bienvenido al Analizador de Desviaciones de Precios!")
+    st.markdown("""
+        Esta herramienta automatiza la auditoría de las transacciones de ventas contra las reglas de descuento y precios objetivos de LQF.
+
+        ### ➡️ Instrucciones:
+        1. **Vaya a la barra lateral izquierda** (o haga click en `>` si está oculta).
+        2. **Suba el archivo Excel (.xlsx)** que contiene los datos de facturación y el listado de precios.
+        3. El archivo debe contener **dos hojas** con los nombres exactos:
+           - **`Facturacion`**
+           - **`Listado de Precios`**
+        4. Una vez cargado, el dashboard de análisis aparecerá automáticamente.
+    """)
+    st.warning("⚠️ Asegúrese de que los nombres de las hojas sean correctos para evitar errores en la lectura de datos.")
+
+else:
+    # ----------------------------------------------------
+    # ESTADO 2: DASHBOARD ACTIVO (ARCHIVO CARGADO)
+    # ----------------------------------------------------
     
     # 1. INTENTO DE LECTURA DE HOJAS
     try:
-        # Se leen las dos hojas del mismo archivo subido
         df_ventas = pd.read_excel(uploaded_file, sheet_name='Facturacion')
         df_precios = pd.read_excel(uploaded_file, sheet_name='Listado de Precios')
-        comparacion_de_precios_activa = True
-
     except ValueError as e:
-        # Error si no encuentra alguna de las hojas
         st.error(f"Error al leer el archivo. Asegúrese de que el archivo Excel contenga dos hojas llamadas exactamente **'Facturacion'** y **'Listado de Precios'**.")
         st.stop()
-        
     except Exception as e:
         st.error(f"Ocurrió un error inesperado al procesar el archivo: {e}")
         st.warning("Verifique la estructura de sus hojas de cálculo y que esté subiendo un archivo Excel válido.")
@@ -244,7 +233,6 @@ if uploaded_file is not None:
     try:
         df_filtrado = df_ventas.copy()
         
-        # Asegurar que las columnas tengan el formato correcto para los filtros antes de aplicar la auditoria
         df_filtrado['Almacen'] = pd.to_numeric(df_filtrado['Almacen'], errors='coerce', downcast='integer')
         df_filtrado['Zona de Venta'] = df_filtrado['Zona de Venta'].astype(str)
         df_filtrado['Codigo'] = df_filtrado['Codigo'].astype(str) 
@@ -264,7 +252,7 @@ if uploaded_file is not None:
             st.warning("El archivo cargado no contiene transacciones después de aplicar los filtros seleccionados. Intente destildar alguna opción.")
             st.stop()
             
-        # Ejecutar auditoría sobre el DataFrame filtrado (pasando df_precios)
+        # Ejecutar auditoría sobre el DataFrame filtrado
         desvios, df_completo = ejecutar_auditoria(df_filtrado, df_precios)
         
         # CÁLCULO DE KPIs (Métricas)
@@ -298,7 +286,6 @@ if uploaded_file is not None:
             if not desvios.empty:
                 st.subheader("Gráfico de Riesgo: Distribución de Alertas por Tipo")
                 
-                # Gráfico de Barras (Usando el color rojo para el riesgo)
                 alerta_counts = desvios['Alerta_Descuento'].value_counts().reset_index()
                 alerta_counts.columns = ['Tipo de Alerta', 'Cantidad de Desvíos']
                 alerta_counts = alerta_counts.set_index('Tipo de Alerta')
@@ -306,13 +293,9 @@ if uploaded_file is not None:
                 
                 st.markdown("---")
                 
-                # DETALLE DE LA TABLA DE AUDITORÍA (Solo desvíos)
                 st.subheader("Tabla Detallada de las Desviaciones")
                 
-                # Columnas base para la auditoría
                 columnas_auditoria = ['Fecha factura', 'Almacen', 'Nombre 1', 'Codigo', 'Material', 'Jerarquia', '% Desc', 'Valor neto', 'Alerta_Descuento']
-                
-                # Incluir las nuevas columnas de precio
                 columnas_auditoria.insert(8, 'Precio_Objetivo') 
                 columnas_auditoria.insert(9, 'Desvío_Precio_Lista') 
                 columnas_auditoria.insert(10, 'Precio_Unitario_Neto_Factura') 
@@ -328,7 +311,6 @@ if uploaded_file is not None:
                     use_container_width=True
                 )
                 
-                # Opción para descargar solo los desvíos (XLSX)
                 df_export_desvios = desvios[columnas_auditoria]
                 xlsx_data_desvios = to_excel(df_export_desvios)
                 
@@ -347,14 +329,11 @@ if uploaded_file is not None:
             st.subheader("Listado de Todas las Transacciones Verificadas")
             st.info("Esta tabla muestra todas las líneas del archivo cargado con el resultado de la auditoría (OK o Alerta), luego de aplicar los filtros.")
 
-            # Columnas seleccionadas para el listado completo
             columnas_completas = ['Fecha factura', 'Almacen', 'Nombre 1', 'Codigo', 'Material', 'Jerarquia', 'Cant', '% Desc', 'Valor neto', 'Alerta_Descuento']
-            # Incluir las nuevas columnas de precio
             columnas_completas.insert(9, 'Precio_Objetivo')
             columnas_completas.insert(10, 'Desvío_Precio_Lista')
             columnas_completas.insert(11, 'Precio_Unitario_Neto_Factura')
             
-            # Display del DataFrame completo con formato
             st.dataframe(
                  df_completo[columnas_completas].style.format({
                     '% Desc': '{:.2f}%',
@@ -366,7 +345,6 @@ if uploaded_file is not None:
                 use_container_width=True
             )
 
-            # Opción para descargar el archivo completo con la columna de alerta (XLSX)
             df_export_completo = df_completo[columnas_completas]
             xlsx_data_completo = to_excel(df_export_completo)
 
@@ -382,15 +360,12 @@ if uploaded_file is not None:
             st.header("Análisis de Desviación de Precios vs. Objetivo")
             st.info(f"Se auditaron **{total_transacciones:,}** líneas contra el Precio Objetivo de la Lista SIN IVA. La tolerancia de desvío es de {MAX_PRECIO_DESVIACION}%.")
 
-            # Filtrar solo donde la comparación fue posible y hay un desvío calculado
             df_comparativo = df_completo[df_completo['Desvío_Precio_Lista'].notna()].copy()
                 
-            # Dar formato a las columnas numéricas para visualización
             df_comparativo['Precio Objetivo SIN IVA (Gs.)'] = df_comparativo['Precio_Objetivo'].apply(lambda x: f"Gs. {x:,.0f}")
             df_comparativo['Precio Facturado Neto (Gs.)'] = df_comparativo['Precio_Unitario_Neto_Factura'].apply(lambda x: f"Gs. {x:,.0f}")
-            df_comparativo['Desvío (%)'] = df_comparativo['Desvío_Precio_Lista'] # Usamos la columna numérica para la barra de progreso
+            df_comparativo['Desvío (%)'] = df_comparativo['Desvío_Precio_Lista'] 
                 
-            # Seleccionar las columnas para la tabla de comparación
             columnas_visual_comparativo = [
                 'Codigo', 
                 'Nombre 1', 
@@ -400,7 +375,6 @@ if uploaded_file is not None:
                 'Alerta_Descuento'
             ]
                 
-            # Mostramos la tabla con barra de progreso
             if not df_comparativo.empty:
                 st.subheader("Visualización de Desviaciones de Precio")
                 st.dataframe(
@@ -411,7 +385,7 @@ if uploaded_file is not None:
                             "Desvío (%)",
                             help="Porcentaje de diferencia respecto al Precio Objetivo. Los negativos indican que se facturó a un precio inferior.",
                             format="%.2f%%",
-                            min_value=-20, # Rango de visualización de -20% a 10%
+                            min_value=-20, 
                             max_value=10, 
                             width="medium"
                         )
@@ -420,8 +394,6 @@ if uploaded_file is not None:
             else:
                  st.info("No hay datos para el comparativo después de aplicar filtros.")
 
-
-            # --- Lógica de Descarga Optimizada para XLSX (Este es el botón que queremos mantener) ---
             columnas_csv_comparativo = [
                 'Fecha factura', 'Nombre 1', 'Solicitante', 'Codigo', 'Material', 
                 'Jerarquia', 'Cant', '% Desc', 'Valor neto', 
@@ -441,6 +413,5 @@ if uploaded_file is not None:
             )
 
     except Exception as e:
-        # Se detiene si hay un error en la ejecución de la auditoría o filtros
         st.error(f"Ocurrió un error al procesar los datos después de cargarlos. Error: {e}")
         st.warning("Verifique la estructura de las columnas en sus hojas de cálculo.")
