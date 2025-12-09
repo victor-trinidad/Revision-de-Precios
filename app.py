@@ -8,6 +8,7 @@ COLOR_INSTITUCIONAL = "#36B7BA"   # Turquesa (Principal para títulos, acentos, 
 COLOR_GRIS_BORDE = "#CCCCCC"     # Gris claro (Para bordes sutiles y contenedores)
 COLOR_TEXTO_PRINCIPAL = "#000000" # Negro forzado para legibilidad
 COLOR_CHECKBOX_GRIS = "#666666"  # Gris oscuro para los textos de filtros
+COLOR_CHECKBOX_BORDE_NO_TILDADO = "#999999" # Gris medio para el símbolo vacío
 
 # Inicializar st.session_state para almacenar el archivo después de presionar "Procesar"
 if 'file_data' not in st.session_state:
@@ -221,23 +222,27 @@ div[data-testid="stMetric"] {{
     gap: 0px !important; 
 }}
 
-/* 6. Checkbox Styling - MÍNIMO INTERLINEADO y COLOR DE TEXTO GRIS */
-div.stCheckbox {{
-    margin: 0px !important;
-    padding: 0px !important;
-}}
+/* 6. Checkbox Styling - MÍNIMO INTERLINEADO, COLOR DE TEXTO GRIS y SÍMBOLO GRIS */
 
+/* Estilo de texto de la etiqueta (Label) */
 .small-checkbox label {{
     font-size: 0.75em !important; 
     margin: 0px !important; 
     padding: 0px 0px !important; 
     line-height: 1.0; 
-    color: {COLOR_CHECKBOX_GRIS} !important; /* Texto de filtro Gris */
+    color: {COLOR_CHECKBOX_GRIS} !important; 
 }}
 
 /* Asegurar que el texto del label del checkbox esté en gris suave */
 .stCheckbox > label > div:nth-child(2) {{
     color: {COLOR_CHECKBOX_GRIS} !important; 
+}}
+
+/* Modificar el color del símbolo del checkbox no tildado (el cuadrado vacío) */
+/* El selector 'svg' apunta al icono de Streamlit */
+div.stCheckbox > label > div > div > div > svg {{
+    fill: {COLOR_CHECKBOX_BORDE_NO_TILDADO}; /* Color del símbolo (relleno) cuando está vacío/sin marcar */
+    stroke: {COLOR_CHECKBOX_BORDE_NO_TILDADO}; /* Color del borde cuando está vacío/sin marcar */
 }}
 
 /* 7. Contenedor de filtros agrupados (Bordes Gris Claro) */
