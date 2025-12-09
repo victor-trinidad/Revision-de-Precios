@@ -3,11 +3,15 @@ import pandas as pd
 import numpy as np
 from io import BytesIO 
 
+# Definición de colores institucionales
+COLOR_INSTITUCIONAL = "#36B7BA"   # Turquesa (Principal para títulos, acentos, gráficos)
+COLOR_GRIS_BORDE = "#CCCCCC"     # Gris claro (Para bordes sutiles y contenedores)
+
 # Inicializar st.session_state para almacenar el archivo después de presionar "Procesar"
 if 'file_data' not in st.session_state:
     st.session_state['file_data'] = None
 
-# --- 1. CONFIGURACIÓN DE PÁGINA Y PARÁMETROS ---
+# --- 1. CONFIGURACIÓN DE PÁGINA Y PARÁMETROS (Sin cambios) ---
 codigos_controlados = [
     '3000113', '3000114', '3000080', '3000082', '3000083', '3000084', '3000085',
     '3000098', '3001265', '3001266', '3001267', '3001894', '3001896', '3002906',
@@ -42,11 +46,10 @@ ETIQUETAS_ALERTA = [
 ]
 
 
-# --- 2. FUNCIÓN PRINCIPAL DE AUDITORÍA (PERMANECE SIN CAMBIOS EN SU LÓGICA) ---
+# --- 2. FUNCIÓN PRINCIPAL DE AUDITORÍA (Sin cambios) ---
 @st.cache_data
 def ejecutar_auditoria(df_ventas, df_precios):
-    
-    # 1. LIMPIEZA AUTOMÁTICA DE ENCABEZADOS Y NORMALIZACIÓN DE COLUMNAS DE VENTA
+    # Lógica de auditoría...
     df_ventas.columns = df_ventas.columns.str.strip()
     column_mapping = {
         'Fecha factura': 'Fecha factura', 'Almacen': 'Almacen', 'Tipo Venta': 'Tipo Venta',
@@ -145,7 +148,7 @@ def ejecutar_auditoria(df_ventas, df_precios):
     return desvios_encontrados, df_audit
 
 
-# --- FUNCIÓN DE EXPORTACIÓN A EXCEL (XLSX) ---
+# --- FUNCIÓN DE EXPORTACIÓN A EXCEL (XLSX) (Sin cambios) ---
 def to_excel(df):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -159,75 +162,79 @@ def to_excel(df):
 st.set_page_config(page_title="Auditoría Continua de Precios LQF", layout="wide")
 
 
-# --- INYECCIÓN DE CSS PARA ESTILO, POSICIONAMIENTO Y TAMAÑO DE FUENTE ---
-st.markdown("""
+# --- INYECCIÓN DE CSS PARA ESTILO INSTITUCIONAL ---
+st.markdown(f"""
 <style>
 /* 1. Reducción de Espacios Verticales Generales */
-.block-container {
+.block-container {{
     padding-top: 0.5rem; 
     padding-bottom: 0rem;
     padding-left: 1rem;
     padding-right: 1rem;
-}
+}}
 
-/* 2. Ajuste del Título (H1) - POSICIÓN CORREGIDA */
-h1 {
+/* 2. Ajuste del Título (H1) - COLOR INSTITUCIONAL TURQUESA */
+h1 {{
     font-size: 1.8em !important; 
-    color: #4A148C; 
+    color: {COLOR_INSTITUCIONAL}; /* Turquesa */
     font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
     text-align: center; 
-    margin-top: 1.5rem !important; /* Ajuste para que se vea completo y centrado */
+    margin-top: 1.5rem !important; 
     margin-bottom: 0px !important; 
     padding-top: 0px !important;
-}
+}}
 
-/* 3. Títulos de Categoría (st.caption) - MÁXIMA COMPACTACIÓN VERTICAL */
-[data-testid="stCaption"] {
-    margin: 0px !important; /* Elimina todos los márgenes */
-    padding: 0px !important; /* Elimina todos los paddings */
+/* 3. Estilo de Tarjeta para las Métricas (KPIs) */
+div[data-testid="stMetric"] {{
+    padding: 10px 10px;
+    border: 1px solid {COLOR_INSTITUCIONAL}; /* Borde Turquesa */
+    border-radius: 8px; 
+    box-shadow: 2px 2px 5px rgba(54, 183, 186, 0.1); /* Sombra ligera turquesa */
+}}
+
+/* 4. Títulos de Categoría (st.caption) - COLOR INSTITUCIONAL TURQUESA */
+[data-testid="stCaption"] {{
+    margin: 0px !important; 
+    padding: 0px !important; 
     line-height: 1.0; 
     font-size: 0.85em !important; 
     font-weight: bold;
-    color: #4A148C; 
-}
+    color: {COLOR_INSTITUCIONAL}; /* Turquesa */
+}}
 
-/* 4. Contenedor de bloque vertical (CLAVE PARA ELIMINAR EL ESPACIO INVISIBLE) */
-[data-testid="stVerticalBlock"] {
-    gap: 0px !important; /* Forzar la eliminación de la separación automática entre caption y checkbox */
-}
+/* 5. Contenedor de bloque vertical (CLAVE PARA ELIMINAR EL ESPACIO INVISIBLE) */
+[data-testid="stVerticalBlock"] {{
+    gap: 0px !important; 
+}}
 
-
-/* 5. Checkbox Styling - MÍNIMO INTERLINEADO */
-
-/* Elimina el margen inherente del contenedor de CADA LÍNEA de checkbox */
-div.stCheckbox {
+/* 6. Checkbox Styling - MÍNIMO INTERLINEADO */
+div.stCheckbox {{
     margin: 0px !important;
     padding: 0px !important;
-}
+}}
 
-/* Clase para achicar la letra y eliminar el padding interno */
-.small-checkbox label {
+.small-checkbox label {{
     font-size: 0.75em !important; 
     margin: 0px !important; 
-    padding: 0px 0px !important; /* CERO vertical padding */
+    padding: 0px 0px !important; 
     line-height: 1.0; 
-}
+}}
 
 
-/* 6. Contenedor de filtros agrupados (Ajusta el espacio entre grupos) */
-div[data-testid="stHorizontalBlock"] > div:nth-child(2) > div {
+/* 7. Contenedor de filtros agrupados (Bordes Gris Claro) */
+div[data-testid="stHorizontalBlock"] > div:nth-child(2) > div {{
     display: flex;
     flex-direction: column;
-    padding: 2px; /* Reducido el padding interno */
-    border: 1px solid #E0E0E0;
+    padding: 2px;
+    border: 1px solid {COLOR_GRIS_BORDE}; /* Borde Gris Claro */
     border-radius: 5px;
     margin-right: 5px; 
     height: 100%; 
-}
+}}
 
-div[data-testid="stHorizontalBlock"] > div:nth-child(2) > div:last-child {
+div[data-testid="stHorizontalBlock"] > div:nth-child(2) > div:last-child {{
     margin-right: 0px; 
-}
+}}
 
 </style>
 """, unsafe_allow_html=True)
@@ -248,8 +255,10 @@ if st.session_state['file_data'] is None:
     
     with col_c:
         with st.form("upload_form", clear_on_submit=False):
+            # Título de carga con color turquesa institucional
+            st.markdown(f"**<p style='color: {COLOR_INSTITUCIONAL};'>Subir Archivo Único de Auditoría (.xlsx)</p>**", unsafe_allow_html=True)
             uploaded_file_temp = st.file_uploader(
-                "**Subir Archivo Único de Auditoría (.xlsx)**", 
+                "", 
                 type=['xlsx'], 
                 key="auditoria_file_temp",
                 help="El archivo Excel debe contener dos hojas nombradas exactamente: 'Facturacion' y 'Listado de Precios'."
@@ -286,9 +295,7 @@ else:
     
     # 2. INTERFAZ DE FILTROS (3 Grupos en Columnas)
     
-    # Columnas: [col_vacio] (1.3) ajustado para mover a la derecha.
     col_vacio, col_controlados, col_ofertas, col_funcionarios = st.columns([1.3, 1, 1, 1])
-
     
     # --- LÓGICA DE VALIDACIÓN DE FILTROS MUTUAMENTE EXCLUYENTES ---
     
@@ -430,14 +437,14 @@ else:
         tab1, tab2, tab3, tab4 = st.tabs(["📊 Resumen Ejecutivo", "⚠️ Análisis Detallado de Riesgo", "📝 Listado Completo", "💲 Comparativo de Precios"])
 
         with tab1:
-            st.header("Métricas Clave de Cumplimiento")
+            st.header(f"Métricas Clave de Cumplimiento")
             
             # Display de KPIs con formato y color
             col1, col2, col3, col4 = st.columns(4)
-            col1.metric("Transacciones Auditadas", f"{total_transacciones:,}")
-            col2.metric("Transacciones con Desvío", f"{transacciones_desviadas:,}", delta=f"{transacciones_desviadas} líneas de riesgo", delta_color="inverse")
-            col3.metric("Nivel de Cumplimiento", f"{porcentaje_cumplimiento:.2f}%", delta=f"{(100 - porcentaje_cumplimiento):.2f}% de Incumplimiento", delta_color="inverse")
-            col4.metric("Valor Neto de Desvíos (Gs.)", f"Gs. {valor_neto_desviado:,.0f}")
+            col1.metric("**Transacciones Auditadas**", f"{total_transacciones:,}")
+            col2.metric("**Transacciones con Desvío**", f"{transacciones_desviadas:,}", delta=f"{transacciones_desviadas} líneas de riesgo", delta_color="inverse")
+            col3.metric("**Nivel de Cumplimiento**", f"{porcentaje_cumplimiento:.2f}%", delta=f"{(100 - porcentaje_cumplimiento):.2f}% de Incumplimiento", delta_color="inverse")
+            col4.metric("**Valor Neto de Desvíos (Gs.)**", f"Gs. {valor_neto_desviado:,.0f}")
             
             st.markdown("---") 
             
@@ -454,7 +461,7 @@ else:
                 alerta_counts = desvios['Alerta_Descuento'].value_counts().reset_index()
                 alerta_counts.columns = ['Tipo de Alerta', 'Cantidad de Desvíos']
                 alerta_counts = alerta_counts.set_index('Tipo de Alerta')
-                st.bar_chart(alerta_counts, use_container_width=True, color='#f03c3c') 
+                st.bar_chart(alerta_counts, use_container_width=True, color=COLOR_INSTITUCIONAL) # Turquesa en el gráfico
                 
                 st.markdown("---")
                 
