@@ -6,6 +6,8 @@ from io import BytesIO
 # Definición de colores institucionales
 COLOR_INSTITUCIONAL = "#36B7BA"   # Turquesa (Principal para títulos, acentos, gráficos)
 COLOR_GRIS_BORDE = "#CCCCCC"     # Gris claro (Para bordes sutiles y contenedores)
+COLOR_TEXTO_PRINCIPAL = "#000000" # Negro forzado para legibilidad
+COLOR_CHECKBOX_GRIS = "#666666"  # Gris oscuro para los textos de filtros
 
 # Inicializar st.session_state para almacenar el archivo después de presionar "Procesar"
 if 'file_data' not in st.session_state:
@@ -165,9 +167,15 @@ st.set_page_config(page_title="Auditoría Continua de Precios LQF", layout="wide
 # --- INYECCIÓN DE CSS PARA ESTILO INSTITUCIONAL ---
 st.markdown(f"""
 <style>
-/* 0. Fondo del Tablero (App Body) */
+/* 0. Fondo del Tablero (App Body) y Color de Texto Global */
 .stApp {{
     background-color: #FFFFFF; /* Fondo blanco forzado */
+    color: {COLOR_TEXTO_PRINCIPAL}; /* Texto principal forzado a negro */
+}}
+
+/* Forzar que cualquier texto dentro del contenedor principal sea negro */
+.block-container, p, div, label, span {{
+    color: {COLOR_TEXTO_PRINCIPAL} !important;
 }}
 
 /* 1. Reducción/Ajuste de Espacios Verticales Generales */
@@ -181,7 +189,7 @@ st.markdown(f"""
 /* 2. Ajuste del Título (H1) */
 h1 {{
     font-size: 1.8em !important; 
-    color: {COLOR_INSTITUCIONAL}; /* Turquesa */
+    color: {COLOR_INSTITUCIONAL}; /* Turquesa (se mantiene) */
     font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
     text-align: center; 
     text-transform: uppercase; 
@@ -193,9 +201,9 @@ h1 {{
 /* 3. Estilo de Tarjeta para las Métricas (KPIs) */
 div[data-testid="stMetric"] {{
     padding: 10px 10px;
-    border: 1px solid {COLOR_INSTITUCIONAL}; /* Borde Turquesa */
+    border: 1px solid {COLOR_INSTITUCIONAL}; 
     border-radius: 8px; 
-    box-shadow: 2px 2px 5px rgba(54, 183, 186, 0.1); /* Sombra ligera turquesa */
+    box-shadow: 2px 2px 5px rgba(54, 183, 186, 0.1); 
 }}
 
 /* 4. Títulos de Categoría (st.caption) - COLOR INSTITUCIONAL TURQUESA */
@@ -205,7 +213,7 @@ div[data-testid="stMetric"] {{
     line-height: 1.0; 
     font-size: 0.85em !important; 
     font-weight: bold;
-    color: {COLOR_INSTITUCIONAL}; /* Turquesa */
+    color: {COLOR_INSTITUCIONAL}; /* Turquesa (se mantiene) */
 }}
 
 /* 5. Contenedor de bloque vertical (CLAVE PARA ELIMINAR EL ESPACIO INVISIBLE) */
@@ -213,7 +221,7 @@ div[data-testid="stMetric"] {{
     gap: 0px !important; 
 }}
 
-/* 6. Checkbox Styling - MÍNIMO INTERLINEADO */
+/* 6. Checkbox Styling - MÍNIMO INTERLINEADO y COLOR DE TEXTO GRIS */
 div.stCheckbox {{
     margin: 0px !important;
     padding: 0px !important;
@@ -224,15 +232,20 @@ div.stCheckbox {{
     margin: 0px !important; 
     padding: 0px 0px !important; 
     line-height: 1.0; 
+    color: {COLOR_CHECKBOX_GRIS} !important; /* Texto de filtro Gris */
 }}
 
+/* Asegurar que el texto del label del checkbox esté en gris suave */
+.stCheckbox > label > div:nth-child(2) {{
+    color: {COLOR_CHECKBOX_GRIS} !important; 
+}}
 
 /* 7. Contenedor de filtros agrupados (Bordes Gris Claro) */
 div[data-testid="stHorizontalBlock"] > div:nth-child(2) > div {{
     display: flex;
     flex-direction: column;
     padding: 2px;
-    border: 1px solid {COLOR_GRIS_BORDE}; /* Borde Gris Claro */
+    border: 1px solid {COLOR_GRIS_BORDE}; 
     border-radius: 5px;
     margin-right: 5px; 
     height: 100%; 
@@ -262,14 +275,14 @@ if st.session_state['file_data'] is None:
     with col_c:
         with st.form("upload_form", clear_on_submit=False):
             # Título de carga con color turquesa institucional
-            st.markdown(f"**<p style='color: {COLOR_INSTITUCIONAL};'>Subir Archivo Único de Auditoría (.xlsx)</p>**", unsafe_allow_html=True)
+            st.markdown(f"**<p style='color: {COLOR_INSTITUCIONAL};'>SUBIR ARCHIVO ÚNICO DE AUDITORÍA (.XLSX)</p>**", unsafe_allow_html=True)
             uploaded_file_temp = st.file_uploader(
                 "", 
                 type=['xlsx'], 
                 key="auditoria_file_temp",
                 help="El archivo Excel debe contener dos hojas nombradas exactamente: 'Facturacion' y 'Listado de Precios'."
             )
-            submitted = st.form_submit_button("➡️ Procesar Datos y Abrir Tablero")
+            submitted = st.form_submit_button("➡️ PROCESAR DATOS Y ABRIR TABLERO")
 
         if submitted:
             if uploaded_file_temp is not None:
