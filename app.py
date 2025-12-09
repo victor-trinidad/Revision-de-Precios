@@ -165,9 +165,9 @@ st.set_page_config(page_title="Auditoría Continua de Precios LQF", layout="wide
 # --- INYECCIÓN DE CSS PARA ESTILO INSTITUCIONAL ---
 st.markdown(f"""
 <style>
-/* 1. Reducción de Espacios Verticales Generales */
+/* 1. Reducción/Ajuste de Espacios Verticales Generales */
 .block-container {{
-    padding-top: 0.5rem; 
+    padding-top: 1.5rem; /* AUMENTADO: Desplaza la aplicación más abajo */
     padding-bottom: 0rem;
     padding-left: 1rem;
     padding-right: 1rem;
@@ -179,8 +179,8 @@ h1 {{
     color: {COLOR_INSTITUCIONAL}; /* Turquesa */
     font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
     text-align: center; 
-    margin-top: 1.5rem !important; 
-    margin-bottom: 1.5rem !important; /* AUMENTADO para desplazar el contenido */
+    margin-top: 2.5rem !important; /* AUMENTADO: Más espacio por encima del título */
+    margin-bottom: 1.5rem !important; /* Espacio debajo del título */
     padding-top: 0px !important;
 }}
 
