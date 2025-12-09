@@ -3,8 +3,11 @@ import pandas as pd
 import numpy as np
 from io import BytesIO 
 
+# Inicializar st.session_state para almacenar el archivo después de presionar "Procesar"
+if 'file_data' not in st.session_state:
+    st.session_state['file_data'] = None
+
 # --- 1. CONFIGURACIÓN DE PÁGINA Y PARÁMETROS ---
-# ... (Parámetros de Auditoría permanecen sin cambios)
 codigos_controlados = [
     '3000113', '3000114', '3000080', '3000082', '3000083', '3000084', '3000085',
     '3000098', '3001265', '3001266', '3001267', '3001894', '3001896', '3002906',
@@ -30,9 +33,6 @@ ZONAS_EMPLEADOS = ['EMPLEADOS LQF', 'MEDICOS PARTICULARES']
 # --- 2. FUNCIÓN PRINCIPAL DE AUDITORÍA (PERMANECE SIN CAMBIOS) ---
 @st.cache_data
 def ejecutar_auditoria(df_ventas, df_precios):
-    
-    # ... (El cuerpo de la función ejecutar_auditoria permanece sin cambios) ...
-    # Se omite para brevedad, pero debe estar completo en tu archivo.
     
     # 1. LIMPIEZA AUTOMÁTICA DE ENCABEZADOS Y NORMALIZACIÓN DE COLUMNAS DE VENTA
     df_ventas.columns = df_ventas.columns.str.strip()
@@ -147,7 +147,7 @@ def to_excel(df):
 st.set_page_config(page_title="Auditoría Continua de Precios LQF", layout="wide")
 
 
-# --- INYECCIÓN DE CSS PARA ESTILO Y POSICIONAMIENTO SUPERIOR ---
+# --- INYECCIÓN DE CSS PARA ESTILO Y POSICIONAMIENTO SUPERIOR Y CENTRADO ---
 st.markdown("""
 <style>
 /* Elimina el relleno superior del cuerpo principal de la app */
@@ -160,12 +160,13 @@ st.markdown("""
 
 /* Estilo para el Título Principal (h1) */
 h1 {
-    font-size: 1.8em !important; /* Hacemos la letra un poco más chica */
+    font-size: 1.8em !important; 
     color: #4A148C; 
-    font-family: 'Segoe UI Black', 'Arial Black', sans-serif; /* Usamos Segoe UI Black como preferido */
-    text-align: left;
-    margin-bottom: 0px; /* Reducimos el espacio después del título */
-    margin-top: 0px; /* Reducimos el espacio antes del título */
+    font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
+    text-align: center; /* CENTRADO DEL TÍTULO */
+    margin-bottom: 0px; 
+    margin-top: 1rem; /* Aproximadamente 1cm de margen superior */
+    padding-top: 0px;
 }
 
 /* Estilo para los Subtítulos de Secciones (h2/h3) */
@@ -182,53 +183,49 @@ h2, h3 {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 1.05em; 
 }
-
-/* Ajuste de espaciado para que el título esté lo más arriba posible */
-div.css-1y4pm5l.e16fv1u0 {
-    padding-top: 0px;
-}
 </style>
 """, unsafe_allow_html=True)
 # ----------------------------------------------------------------
 
-# TÍTULO PRINCIPAL (SIN ESCUDO, CON NUEVO TEXTO)
+# TÍTULO PRINCIPAL
 st.title("Tablero de control de facturación")
 
-# 1. Definir el file_uploader en el cuerpo principal
-uploaded_file = st.file_uploader(
-    "1. Subir Archivo Único de Auditoría (.xlsx)", 
-    type=['xlsx'], 
-    key="auditoria_file",
-    help="El archivo Excel debe contener dos hojas nombradas exactamente: 'Facturacion' y 'Listado de Precios'."
-)
-
 # --- LÓGICA DE PANTALLA CONDICIONAL ---
-if uploaded_file is None:
+if st.session_state['file_data'] is None:
     # ----------------------------------------------------
-    # ESTADO 1: PANTALLA DE BIENVENIDA (NO HAY ARCHIVO)
+    # ESTADO 1: PANTALLA DE CARGA MINIMALISTA
     # ----------------------------------------------------
-    
     st.markdown("---")
     
-    # ELIMINAMOS LA LÍNEA st.image(...)
+    # Usar columnas para centrar el formulario de carga
+    col_l, col_c, col_r = st.columns([1, 2, 1])
     
-    st.markdown("# ¡Bienvenido al Analizador de Desviaciones de Precios!")
-    st.markdown("""
-        Esta herramienta automatiza la auditoría de las transacciones de ventas contra las reglas de descuento y precios objetivos de LQF.
+    with col_c:
+        # Usamos un formulario para asegurar que la acción se dispare solo con el botón "Procesar"
+        with st.form("upload_form", clear_on_submit=False):
+            # Uploader (sin texto extra)
+            uploaded_file_temp = st.file_uploader(
+                "**Subir Archivo Único de Auditoría (.xlsx)**", 
+                type=['xlsx'], 
+                key="auditoria_file_temp",
+                help="El archivo Excel debe contener dos hojas nombradas exactamente: 'Facturacion' y 'Listado de Precios'."
+            )
+            # Botón de Procesar
+            submitted = st.form_submit_button("➡️ Procesar Datos y Abrir Tablero")
 
-        ### ➡️ Instrucciones:
-        1. **Suba el archivo Excel (.xlsx)** en el campo de arriba.
-        2. El archivo debe contener **dos hojas** con los nombres exactos:
-           - **`Facturacion`**
-           - **`Listado de Precios`**
-        3. Una vez cargado, el dashboard de análisis aparecerá automáticamente.
-    """)
-    st.warning("⚠️ Asegúrese de que los nombres de las hojas sean correctos para evitar errores en la lectura de datos.")
+        if submitted:
+            if uploaded_file_temp is not None:
+                # Si hay archivo y se presiona, lo guardamos en session_state y recargamos
+                st.session_state['file_data'] = uploaded_file_temp
+                st.rerun() 
+            else:
+                st.error("Por favor, suba un archivo antes de presionar 'Procesar'.")
 
 else:
     # ----------------------------------------------------
-    # ESTADO 2: DASHBOARD ACTIVO (ARCHIVO CARGADO)
+    # ESTADO 2: DASHBOARD ACTIVO (ARCHIVO GUARDADO EN SESSION STATE)
     # ----------------------------------------------------
+    uploaded_file = st.session_state['file_data']
     
     # 1. INTENTO DE LECTURA DE HOJAS
     try:
@@ -236,10 +233,13 @@ else:
         df_precios = pd.read_excel(uploaded_file, sheet_name='Listado de Precios')
     except ValueError as e:
         st.error(f"Error al leer el archivo. Asegúrese de que el archivo Excel contenga dos hojas llamadas exactamente **'Facturacion'** y **'Listado de Precios'**.")
+        # Limpiamos el estado para que vuelva a la pantalla de carga
+        st.session_state['file_data'] = None
         st.stop()
     except Exception as e:
         st.error(f"Ocurrió un error inesperado al procesar el archivo: {e}")
         st.warning("Verifique la estructura de sus hojas de cálculo y que esté subiendo un archivo Excel válido.")
+        st.session_state['file_data'] = None
         st.stop()
 
 
@@ -457,3 +457,4 @@ else:
     except Exception as e:
         st.error(f"Ocurrió un error al procesar los datos después de cargarlos. Error: {e}")
         st.warning("Verifique la estructura de las columnas en sus hojas de cálculo.")
+        st.session_state['file_data'] = None
