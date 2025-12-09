@@ -247,27 +247,36 @@ else:
     # 2. INTERFAZ DE FILTROS 
     st.subheader("Opciones de Análisis Rápido")
     
-    col_filtro1, col_filtro2, col_filtro3, col_espacio = st.columns([1.5, 1.5, 1.5, 3])
+    # --- FILTROS DE EXCLUSIÓN ---
+    st.markdown("### 🚫 1. Filtros de Exclusión de Canales")
+    col_excluir1, col_excluir2, col_espacio1 = st.columns([1.5, 1.5, 4])
     
-    with col_filtro1:
+    with col_excluir1:
         excluir_empleados = st.checkbox(
-            'Excluir Empleados/Médicos', 
+            'Excluir Canales de Empleados/Médicos', 
             value=True, 
+            key='check_excluir_empleados',
             help='Excluye ventas con Zona de Venta: EMPLEADOS LQF y MEDICOS PARTICULARES.'
         )
 
-    with col_filtro2:
+    with col_excluir2:
         excluir_1012 = st.checkbox(
-            'Excluir Almacén 1012', 
+            'Excluir Almacén de Ofertas (1012)', 
             value=True, 
+            key='check_excluir_1012',
             help='Excluye ventas provenientes del Almacén 1012 (Ofertas).'
         )
 
-    with col_filtro3:
+    # --- FILTROS DE INCLUSIÓN ---
+    st.markdown("### ✨ 2. Filtros de Materiales")
+    col_incluir1, col_espacio2 = st.columns([3, 4])
+
+    with col_incluir1:
         ver_solo_controlados = st.checkbox(
-            'Ver solo Materiales Controlados', 
+            'Ver **SOLO** Materiales Controlados', 
             value=False, 
-            help='Limita la auditoría solo a los códigos que están en la lista de control.'
+            key='check_solo_controlados',
+            help='Limita la auditoría solo a los códigos que están en la lista de control (Ignora todos los demás).'
         )
         
     st.markdown("---") 
@@ -281,12 +290,14 @@ else:
         df_filtrado['Codigo'] = df_filtrado['Codigo'].astype(str) 
 
         
+        # Lógica de Exclusión
         if excluir_empleados:
             df_filtrado = df_filtrado[~df_filtrado['Zona de Venta'].isin(ZONAS_EMPLEADOS)]
 
         if excluir_1012:
             df_filtrado = df_filtrado[df_filtrado['Almacen'] != ALMACEN_OFERTAS]
             
+        # Lógica de Inclusión (Ver solo)
         if ver_solo_controlados:
             df_filtrado = df_filtrado[df_filtrado['Codigo'].astype(str).isin(codigos_controlados)]
 
