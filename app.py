@@ -173,14 +173,14 @@ st.markdown(f"""
     padding-right: 1rem;
 }}
 
-/* 2. Ajuste del Título (H1) - COLOR INSTITUCIONAL TURQUESA */
+/* 2. Ajuste del Título (H1) - COLOR INSTITUCIONAL TURQUESA Y ESPACIO AUMENTADO */
 h1 {{
     font-size: 1.8em !important; 
     color: {COLOR_INSTITUCIONAL}; /* Turquesa */
     font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
     text-align: center; 
     margin-top: 1.5rem !important; 
-    margin-bottom: 0px !important; 
+    margin-bottom: 1.5rem !important; /* AUMENTADO para desplazar el contenido */
     padding-top: 0px !important;
 }}
 
@@ -240,7 +240,7 @@ div[data-testid="stHorizontalBlock"] > div:nth-child(2) > div:last-child {{
 """, unsafe_allow_html=True)
 # ----------------------------------------------------------------
 
-# TÍTULO PRINCIPAL
+# TÍTULO PRINCIPAL (st.title genera el <h1>)
 st.title("Tablero de control de facturación")
 
 # --- LÓGICA DE PANTALLA CONDICIONAL ---
