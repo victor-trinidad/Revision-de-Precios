@@ -136,10 +136,13 @@ def to_excel(df):
     para usarlo con st.download_button.
     """
     output = BytesIO()
+    # Usamos pd.ExcelWriter para generar el archivo XLSX
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Reporte Auditoria')
     
-    return output.getvalue()
+    # Mover el puntero del buffer al inicio y leer todos los bytes generados
+    output.seek(0)
+    return output.read() 
 
 
 # --- INTERFAZ STREAMLIT (EL DASHBOARD) ---
@@ -179,6 +182,7 @@ if uploaded_file is not None:
         
     except Exception as e:
         st.error(f"Ocurrió un error inesperado al procesar el archivo: {e}")
+        st.warning("Verifique la estructura de sus hojas de cálculo y que esté subiendo un archivo Excel válido.")
         st.stop()
 
 
@@ -298,7 +302,7 @@ if uploaded_file is not None:
                     data=xlsx_data_desvios, 
                     file_name='Reporte_Desviaciones_LQF.xlsx', 
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    key="descarga_alertas" # CLAVE AÑADIDA
+                    key="descarga_alertas" 
                 )
                 
             else:
@@ -327,7 +331,7 @@ if uploaded_file is not None:
                 data=xlsx_data_completo, 
                 file_name='Reporte_Completo_Auditado_LQF.xlsx', 
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                key="descarga_completa" # CLAVE AÑADIDA
+                key="descarga_completa" 
             )
             
         with tab4:
@@ -383,7 +387,7 @@ if uploaded_file is not None:
                 data=xlsx_data_comparativo, 
                 file_name='Reporte_Comparativo_Precios_LQF_Detallado.xlsx', 
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                key="descarga_comparativo" # CLAVE AÑADIDA
+                key="descarga_comparativo" 
             )
 
     except Exception as e:
