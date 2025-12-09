@@ -176,20 +176,12 @@ h1 {
     color: #4A148C; 
     font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
     text-align: center; 
-    margin-top: 2rem; /* Separación estable y adecuada */
-    margin-bottom: 0px; 
-    padding-top: 0px;
+    margin-top: 1.5rem !important; /* Ajuste para que se vea completo y centrado */
+    margin-bottom: 0px !important; 
+    padding-top: 0px !important;
 }
 
-/* 3. Estilo para subtítulos (H2 - Ahora INVISIBLE al ser eliminado el st.subheader) */
-h2 {
-    /* Mantener las reglas para otros usos de h2, pero no se usará aquí */
-    padding-bottom: 0px; 
-    margin-top: 0px;
-    margin-bottom: 0px;
-}
-
-/* 4. Títulos de Categoría (st.caption) - MÁXIMA COMPACTACIÓN */
+/* 3. Títulos de Categoría (st.caption) - MÁXIMA COMPACTACIÓN VERTICAL */
 [data-testid="stCaption"] {
     margin: 0px !important; /* Elimina todos los márgenes */
     padding: 0px !important; /* Elimina todos los paddings */
@@ -199,9 +191,15 @@ h2 {
     color: #4A148C; 
 }
 
-/* 5. Checkbox Styling - MÁXIMO ACERCAMIENTO Y MÍNIMO INTERLINEADO */
+/* 4. Contenedor de bloque vertical (CLAVE PARA ELIMINAR EL ESPACIO INVISIBLE) */
+[data-testid="stVerticalBlock"] {
+    gap: 0px !important; /* Forzar la eliminación de la separación automática entre caption y checkbox */
+}
 
-/* Elimina el margen inherente del contenedor de la línea del checkbox */
+
+/* 5. Checkbox Styling - MÍNIMO INTERLINEADO */
+
+/* Elimina el margen inherente del contenedor de CADA LÍNEA de checkbox */
 div.stCheckbox {
     margin: 0px !important;
     padding: 0px !important;
@@ -211,7 +209,7 @@ div.stCheckbox {
 .small-checkbox label {
     font-size: 0.75em !important; 
     margin: 0px !important; 
-    padding: 0px 0px; /* CERO vertical padding para interlineado mínimo */
+    padding: 0px 0px !important; /* CERO vertical padding */
     line-height: 1.0; 
 }
 
@@ -288,8 +286,6 @@ else:
     
     # 2. INTERFAZ DE FILTROS (3 Grupos en Columnas)
     
-    # st.subheader("Opciones de Análisis Rápido") <--- ELIMINADO
-
     # Columnas: [col_vacio] (1.3) ajustado para mover a la derecha.
     col_vacio, col_controlados, col_ofertas, col_funcionarios = st.columns([1.3, 1, 1, 1])
 
