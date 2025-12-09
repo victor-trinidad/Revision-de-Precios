@@ -4,8 +4,7 @@ import numpy as np
 from io import BytesIO 
 
 # --- 1. CONFIGURACIÓN DE PÁGINA Y PARÁMETROS ---
-
-# 🔴 LISTA DE CÓDIGOS CONTROLADOS (MÁXIMO 5% DE DESCUENTO)
+# ... (Parámetros de Auditoría permanecen sin cambios)
 codigos_controlados = [
     '3000113', '3000114', '3000080', '3000082', '3000083', '3000084', '3000085',
     '3000098', '3001265', '3001266', '3001267', '3001894', '3001896', '3002906',
@@ -13,7 +12,6 @@ codigos_controlados = [
     '3003955', '3003952', '3004074', '3004073', '3003773', '3003775', '3004756'
 ]
 
-# Topes de Descuento y Reglas de Negocio
 DESC_MAX_CONTROLADOS = 5.0
 DESC_MAX_EMPLEADOS = 0.0
 DESC_MAX_NUTRICIA_BEBELAC = 6.0
@@ -29,9 +27,12 @@ marcas_6_porciento = ['NUTRICIA', 'BEBELAC']
 ZONAS_EMPLEADOS = ['EMPLEADOS LQF', 'MEDICOS PARTICULARES']
 
 
-# --- 2. FUNCIÓN PRINCIPAL DE AUDITORÍA (CON LIMPIEZA DE COLUMNAS) ---
+# --- 2. FUNCIÓN PRINCIPAL DE AUDITORÍA (PERMANECE SIN CAMBIOS) ---
 @st.cache_data
 def ejecutar_auditoria(df_ventas, df_precios):
+    
+    # ... (El cuerpo de la función ejecutar_auditoria permanece sin cambios) ...
+    # Se omite para brevedad, pero debe estar completo en tu archivo.
     
     # 1. LIMPIEZA AUTOMÁTICA DE ENCABEZADOS Y NORMALIZACIÓN DE COLUMNAS DE VENTA
     df_ventas.columns = df_ventas.columns.str.strip()
@@ -144,7 +145,54 @@ def to_excel(df):
 # --- INTERFAZ STREAMLIT (EL DASHBOARD) ---
 
 st.set_page_config(page_title="Auditoría Continua de Precios LQF", layout="wide")
-st.title("🛡️ Dashboard de Auditoría de Desviaciones de Precios - LQF")
+
+
+# --- INYECCIÓN DE CSS PARA ESTILO Y POSICIONAMIENTO SUPERIOR ---
+st.markdown("""
+<style>
+/* Elimina el relleno superior del cuerpo principal de la app */
+.block-container {
+    padding-top: 0rem; 
+    padding-bottom: 0rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+/* Estilo para el Título Principal (h1) */
+h1 {
+    font-size: 1.8em !important; /* Hacemos la letra un poco más chica */
+    color: #4A148C; 
+    font-family: 'Segoe UI Black', 'Arial Black', sans-serif; /* Usamos Segoe UI Black como preferido */
+    text-align: left;
+    margin-bottom: 0px; /* Reducimos el espacio después del título */
+    margin-top: 0px; /* Reducimos el espacio antes del título */
+}
+
+/* Estilo para los Subtítulos de Secciones (h2/h3) */
+h2, h3 {
+    font-size: 1.5em !important; 
+    color: #00897B; 
+    border-bottom: 1px solid #E0F2F1; 
+    padding-bottom: 5px;
+    margin-top: 20px;
+}
+
+/* Estilo para todo el texto de la aplicación (cuerpo) */
+.stApp {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1.05em; 
+}
+
+/* Ajuste de espaciado para que el título esté lo más arriba posible */
+div.css-1y4pm5l.e16fv1u0 {
+    padding-top: 0px;
+}
+</style>
+""", unsafe_allow_html=True)
+# ----------------------------------------------------------------
+
+# TÍTULO PRINCIPAL (SIN ESCUDO, CON NUEVO TEXTO)
+st.title("Tablero de control de facturación")
 
 # 1. Definir el file_uploader en el cuerpo principal
 uploaded_file = st.file_uploader(
@@ -160,10 +208,10 @@ if uploaded_file is None:
     # ESTADO 1: PANTALLA DE BIENVENIDA (NO HAY ARCHIVO)
     # ----------------------------------------------------
     
-    # Se añade espacio para que el mensaje no esté pegado al uploader
     st.markdown("---")
     
-    st.image("https://i.imgur.com/gK9q0vP.png", width=150) # Placeholder de imagen, puedes reemplazarlo
+    # ELIMINAMOS LA LÍNEA st.image(...)
+    
     st.markdown("# ¡Bienvenido al Analizador de Desviaciones de Precios!")
     st.markdown("""
         Esta herramienta automatiza la auditoría de las transacciones de ventas contra las reglas de descuento y precios objetivos de LQF.
