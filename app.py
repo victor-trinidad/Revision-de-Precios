@@ -29,8 +29,19 @@ ALMACEN_OFERTAS = 1012
 marcas_6_porciento = ['NUTRICIA', 'BEBELAC']
 ZONAS_EMPLEADOS = ['EMPLEADOS LQF', 'MEDICOS PARTICULARES']
 
+# Etiquetas exactas de las alertas generadas en la función ejecutar_auditoria
+ETIQUETAS_ALERTA = [
+    '❌ Ilegal (Empleado/Médico)', 
+    f'⛔ Precio Facturado bajo (>{MAX_PRECIO_DESVIACION}%)',
+    '⚠️ Controlado (>5%) Excedido',
+    '⚠️ Intercompany 200046 (>11%) Excedido', 
+    '⚠️ Intercompany 200173 (>10%) Excedido', 
+    '⚠️ Marca Nutricion (>6%) Excedido', 
+    '⚠️ General (>7%) Excedido',
+    '✅ OK'
+]
 
-# --- 2. FUNCIÓN PRINCIPAL DE AUDITORÍA (PERMANECE SIN CAMBIOS) ---
+# --- 2. FUNCIÓN PRINCIPAL DE AUDITORÍA (PERMANECE SIN CAMBIOS EN SU LÓGICA) ---
 @st.cache_data
 def ejecutar_auditoria(df_ventas, df_precios):
     
@@ -118,13 +129,13 @@ def ejecutar_auditoria(df_ventas, df_precios):
         (df_audit['% Desc'] > DESC_MAX_GENERAL)
     ]
     etiquetas_alerta = [
-        '❌ Ilegal (Empleado/Médico)', 
-        f'⛔ Precio Facturado bajo (>{MAX_PRECIO_DESVIACION}%)',
-        '⚠️ Controlado (>5%) Excedido',
-        '⚠️ Intercompany 200046 (>11%) Excedido', 
-        '⚠️ Intercompany 200173 (>10%) Excedido', 
-        '⚠️ Marca Nutricion (>6%) Excedido', 
-        '⚠️ General (>7%) Excedido'
+        ETIQUETAS_ALERTA[0], # '❌ Ilegal (Empleado/Médico)'
+        ETIQUETAS_ALERTA[1], # '⛔ Precio Facturado bajo (>2.0%)'
+        ETIQUETAS_ALERTA[2], # '⚠️ Controlado (>5%) Excedido'
+        ETIQUETAS_ALERTA[3], # '⚠️ Intercompany 200046 (>11%) Excedido'
+        ETIQUETAS_ALERTA[4], # '⚠️ Intercompany 200173 (>10%) Excedido' 
+        ETIQUETAS_ALERTA[5], # '⚠️ Marca Nutricion (>6%) Excedido' 
+        ETIQUETAS_ALERTA[6]  # '⚠️ General (>7%) Excedido'
     ]
 
     df_audit['Alerta_Descuento'] = np.select(condiciones, etiquetas_alerta, default='✅ OK')
@@ -256,9 +267,12 @@ else:
         st.stop()
     except Exception as e:
         st.error(f"Ocurrió un error inesperado al procesar el archivo: {e}")
-        st.warning("Verifique la estructura de sus hojas de cálculo y que esté subiendo un archivo Excel válido.")
+        st.warning("Verifique la estructura de las columnas en sus hojas de cálculo.")
         st.session_state['file_data'] = None
         st.stop()
+        
+    # Ejecución inicial de auditoría para generar la columna 'Alerta_Descuento'
+    desvios_raw, df_completo_raw = ejecutar_auditoria(df_ventas.copy(), df_precios.copy())
 
 
     # 2. INTERFAZ DE FILTROS (AJUSTADA AL MARGEN SUPERIOR DERECHO)
@@ -274,31 +288,82 @@ else:
         st.markdown('<div class="small-checkbox">', unsafe_allow_html=True)
         st.caption("**Filtros Rápidos**")
         
-        # --- FILTROS DE EXCLUSIÓN ---
+        # --- FILTROS DE EXCLUSIÓN / INCLUSIÓN SOBRE DATOS CRUDOS ---
+        
+        # Filtro de Exclusión de Canales Específicos (sobre datos crudos)
         excluir_empleados = st.checkbox(
             'Excluir Empleados/Médicos', 
             value=True, 
             key='check_excluir_empleados',
         )
-
         excluir_1012 = st.checkbox(
             'Excluir Almacén 1012 (Ofertas)', 
             value=True, 
             key='check_excluir_1012',
         )
-
-        # --- FILTROS DE INCLUSIÓN ---
+        
+        # Filtro de Inclusión de Materiales Específicos (sobre datos crudos)
         ver_solo_controlados = st.checkbox(
             'Ver SOLO Materiales Controlados', 
             value=False, 
             key='check_solo_controlados',
         )
+        
+        st.markdown("---") 
+        st.caption("**Filtros de Riesgo (Post-Auditoría)**")
+        
+        # --- FILTROS DE EXCLUSIÓN SOBRE LA ALERTA GENERADA ---
+        # Estos se aplican DESPUÉS de ejecutar la auditoría (Paso 3)
+        
+        # Excluir alerta Ilegal (Empleado/Médico)
+        excluir_alerta_empleados = st.checkbox(
+            'Ocultar Ilegal (Empleado/Médico)', 
+            value=False, 
+            key='check_alerta_empleados',
+        )
+
+        # Excluir alerta Precio Facturado Bajo
+        excluir_alerta_precio = st.checkbox(
+            f'Ocultar Precio Facturado bajo (> {MAX_PRECIO_DESVIACION}%)', 
+            value=False, 
+            key='check_alerta_precio',
+        )
+        
+        # Excluir alerta Controlado Excedido
+        excluir_alerta_controlado = st.checkbox(
+            f'Ocultar Controlado (> {DESC_MAX_CONTROLADOS}%) Excedido', 
+            value=False, 
+            key='check_alerta_controlado',
+        )
+        
+        # Excluir alerta Intercompany Excedido
+        excluir_alerta_intercompany = st.checkbox(
+            f'Ocultar Intercompany (> {DESC_INTERCOMPANY_200046}%) Excedido', 
+            value=False, 
+            key='check_alerta_intercompany',
+        )
+        
+        # Excluir alerta Marca Nutricion Excedida
+        excluir_alerta_nutricion = st.checkbox(
+            f'Ocultar Marca Nutricion (> {DESC_MAX_NUTRICIA_BEBELAC}%) Excedida', 
+            value=False, 
+            key='check_alerta_nutricion',
+        )
+        
+        # Excluir alerta General Excedida
+        excluir_alerta_general = st.checkbox(
+            f'Ocultar General (> {DESC_MAX_GENERAL}%) Excedida', 
+            value=False, 
+            key='check_alerta_general',
+        )
+        
         st.markdown('</div>', unsafe_allow_html=True)
         
     st.markdown("---") 
     
     # 3. APLICACIÓN DE FILTROS Y EJECUCIÓN DE AUDITORÍA
     try:
+        # A. FILTRADO INICIAL SOBRE DATOS CRUDOS (Almacén, Zona de Venta, Código)
         df_filtrado = df_ventas.copy()
         
         df_filtrado['Almacen'] = pd.to_numeric(df_filtrado['Almacen'], errors='coerce', downcast='integer')
@@ -306,25 +371,51 @@ else:
         df_filtrado['Codigo'] = df_filtrado['Codigo'].astype(str) 
 
         
-        # Lógica de Exclusión
+        # Lógica de Exclusión (Datos Crudos)
         if excluir_empleados:
             df_filtrado = df_filtrado[~df_filtrado['Zona de Venta'].isin(ZONAS_EMPLEADOS)]
 
         if excluir_1012:
             df_filtrado = df_filtrado[df_filtrado['Almacen'] != ALMACEN_OFERTAS]
             
-        # Lógica de Inclusión (Ver solo)
+        # Lógica de Inclusión (Datos Crudos)
         if ver_solo_controlados:
             df_filtrado = df_filtrado[df_filtrado['Codigo'].astype(str).isin(codigos_controlados)]
 
 
         if df_filtrado.empty:
-            st.warning("El archivo cargado no contiene transacciones después de aplicar los filtros seleccionados. Intente destildar alguna opción.")
+            st.warning("El archivo cargado no contiene transacciones después de aplicar los filtros iniciales (Empleados/1012/Solo Controlados). Intente destildar alguna opción.")
             st.stop()
             
-        # Ejecutar auditoría sobre el DataFrame filtrado
+        # B. Ejecutar auditoría sobre el DataFrame filtrado (Esto genera la columna Alerta_Descuento)
         desvios, df_completo = ejecutar_auditoria(df_filtrado, df_precios)
         
+        # C. FILTRADO FINAL SOBRE LAS ALERTAS GENERADAS
+        
+        alertas_a_excluir = []
+        if excluir_alerta_empleados:
+            alertas_a_excluir.append(ETIQUETAS_ALERTA[0])
+        if excluir_alerta_precio:
+            alertas_a_excluir.append(ETIQUETAS_ALERTA[1])
+        if excluir_alerta_controlado:
+            alertas_a_excluir.append(ETIQUETAS_ALERTA[2])
+        if excluir_alerta_intercompany:
+            alertas_a_excluir.extend([ETIQUETAS_ALERTA[3], ETIQUETAS_ALERTA[4]]) # Intercompany son 2 alertas
+        if excluir_alerta_nutricion:
+            alertas_a_excluir.append(ETIQUETAS_ALERTA[5])
+        if excluir_alerta_general:
+            alertas_a_excluir.append(ETIQUETAS_ALERTA[6])
+            
+        # Aplicar exclusión de alertas al DataFrame completo y al de desvíos
+        df_completo = df_completo[~df_completo['Alerta_Descuento'].isin(alertas_a_excluir)]
+        desvios = desvios[~desvios['Alerta_Descuento'].isin(alertas_a_excluir)]
+        
+        
+        if df_completo.empty:
+             st.warning("No hay transacciones restantes después de aplicar todos los filtros, incluidos los de Alerta de Riesgo. Intente destildar alguna opción.")
+             st.stop()
+
+
         # CÁLCULO DE KPIs (Métricas)
         total_transacciones = len(df_completo)
         transacciones_desviadas = len(desvios)
@@ -393,11 +484,11 @@ else:
                 )
                 
             else:
-                st.info("No hay desvíos que analizar en este reporte.")
+                st.info("No hay desvíos que analizar en este reporte (o fueron excluidos por los filtros de riesgo).")
 
         with tab3:
             st.subheader("Listado de Todas las Transacciones Verificadas")
-            st.info("Esta tabla muestra todas las líneas del archivo cargado con el resultado de la auditoría (OK o Alerta), luego de aplicar los filtros.")
+            st.info("Esta tabla muestra todas las líneas del archivo cargado con el resultado de la auditoría (OK o Alerta), luego de aplicar todos los filtros.")
 
             columnas_completas = ['Fecha factura', 'Almacen', 'Nombre 1', 'Codigo', 'Material', 'Jerarquia', 'Cant', '% Desc', 'Valor neto', 'Alerta_Descuento']
             columnas_completas.insert(9, 'Precio_Objetivo')
