@@ -263,17 +263,14 @@ else:
 
     # 2. INTERFAZ DE FILTROS (AJUSTADA AL MARGEN SUPERIOR DERECHO)
     
-    # Creamos un espacio vacío para empujar los filtros a la derecha
-    # y usamos st.container para aplicar la clase CSS a los checkboxes
-    
+    # Creamos un espacio vacío grande para empujar los filtros a la derecha
     col_vacio, col_filtros = st.columns([4, 1.5])
     
     with col_vacio:
-        # Esto oculta el subtítulo del Dashboard
-        st.subheader("") 
+        st.subheader("Opciones de Análisis Rápido") 
         
     with col_filtros:
-        # Aplicamos la clase CSS para achicar la letra
+        # Aplicamos la clase CSS para achicar la letra y lo contenemos en un div para estilo
         st.markdown('<div class="small-checkbox">', unsafe_allow_html=True)
         st.caption("**Filtros Rápidos**")
         
