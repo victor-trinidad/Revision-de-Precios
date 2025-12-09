@@ -164,7 +164,7 @@ st.markdown("""
 <style>
 /* 1. Reducción de Espacios Verticales Generales */
 .block-container {
-    padding-top: 1rem; /* Reducido de 2rem */
+    padding-top: 1rem; 
     padding-bottom: 0rem;
     padding-left: 1rem;
     padding-right: 1rem;
@@ -176,7 +176,7 @@ h1 {
     color: #4A148C; 
     font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
     text-align: center; 
-    margin-top: 3rem; /* Reducido de 4rem */
+    margin-top: 2.5rem; /* Ultra reducido de 3rem */
     margin-bottom: 0px; 
     padding-top: 0px;
 }
@@ -187,24 +187,35 @@ h2 {
     color: #00897B; 
     border-bottom: 1px solid #E0F2F1; 
     padding-bottom: 5px;
-    margin-top: 10px; /* Reducido de 20px */
+    margin-top: 5px; /* Ultra reducido de 10px */
 }
 
 /* 4. Clase para achicar la letra de los checkboxes de los filtros */
 .small-checkbox label {
-    font-size: 0.78em !important; /* Achicado un poco más de 0.85em */
+    font-size: 0.75em !important; /* Mantenemos 0.75em o ligeramente más chico */
     margin: 0px !important; 
-    padding: 2px 0px; 
+    padding: 1px 0px; /* Reducido a 1px para interlineado mínimo (0.15cm visual) */
 }
 
-/* 5. Contenedor general para los filtros agrupados (Ajusta el espacio entre grupos) */
+/* 5. Títulos de Categoría (st.caption) - CLAVE PARA REDUCIR ESPACIO */
+[data-testid="stCaption"] {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important; /* Elimina espacio bajo el título de categoría */
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+    font-size: 0.85em !important; /* Dejamos el título un poco más visible */
+    font-weight: bold;
+    color: #4A148C; /* Color para destacar el título de la categoría */
+}
+
+/* 6. Contenedor de filtros agrupados (Ajusta el espacio entre grupos) */
 div[data-testid="stHorizontalBlock"] > div:nth-child(2) > div {
     display: flex;
     flex-direction: column;
-    padding: 5px;
+    padding: 3px; /* Reducido el padding interno */
     border: 1px solid #E0E0E0;
     border-radius: 5px;
-    margin-right: 5px; /* Reducido el margen entre columnas de filtro */
+    margin-right: 5px; 
     height: 100%; 
 }
 
@@ -271,9 +282,8 @@ else:
     
     st.subheader("Opciones de Análisis Rápido") 
     
-    # Creamos 4 columnas: 
-    # [col_vacio] Reducido de 1.5 a 1.2 para correr los filtros más a la derecha.
-    col_vacio, col_controlados, col_ofertas, col_funcionarios = st.columns([1.2, 1, 1, 1])
+    # Columnas: [col_vacio] (1.1) ajustado ligeramente.
+    col_vacio, col_controlados, col_ofertas, col_funcionarios = st.columns([1.1, 1, 1, 1])
 
     
     # --- LÓGICA DE VALIDACIÓN DE FILTROS MUTUAMENTE EXCLUYENTES ---
