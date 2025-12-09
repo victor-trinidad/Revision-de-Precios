@@ -7,8 +7,8 @@ from io import BytesIO
 COLOR_INSTITUCIONAL = "#36B7BA"   # Turquesa (Principal para títulos, acentos, gráficos)
 COLOR_GRIS_BORDE = "#CCCCCC"     # Gris claro (Para bordes sutiles y contenedores)
 COLOR_TEXTO_PRINCIPAL = "#000000" # Negro forzado para legibilidad
-COLOR_CHECKBOX_GRIS = "#666666"  # Gris oscuro para los textos de filtros
-COLOR_CHECKBOX_BORDE_NO_TILDADO = "#999999" # Gris medio para el símbolo vacío
+COLOR_CHECKBOX_GRIS = "#BFBFBF"  # Gris oscuro para los textos de filtros
+COLOR_CHECKBOX_BORDE_NO_TILDADO = "#BFBFBF" # Gris medio para el símbolo vacío
 
 # Inicializar st.session_state para almacenar el archivo después de presionar "Procesar"
 if 'file_data' not in st.session_state:
