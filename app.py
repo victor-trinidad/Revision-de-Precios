@@ -27,7 +27,6 @@ CLIENTE_200173 = '200173'
 ALMACEN_EMPLEADOS_PERMITIDO = 1041
 ALMACEN_OFERTAS = 1012
 marcas_6_porciento = ['NUTRICIA', 'BEBELAC']
-# Usamos Zona de Venta y Almacen para identificar funcionarios/médicos
 ZONAS_FUNCIONARIOS = ['EMPLEADOS LQF', 'MEDICOS PARTICULARES'] 
 
 # Etiquetas exactas de las alertas generadas en la función ejecutar_auditoria
@@ -163,61 +162,50 @@ st.set_page_config(page_title="Auditoría Continua de Precios LQF", layout="wide
 # --- INYECCIÓN DE CSS PARA ESTILO, POSICIONAMIENTO Y TAMAÑO DE FUENTE ---
 st.markdown("""
 <style>
-/* Aumenta el padding-top del contenedor principal para dar más espacio arriba */
+/* 1. Reducción de Espacios Verticales Generales */
 .block-container {
-    padding-top: 2rem; 
+    padding-top: 1rem; /* Reducido de 2rem */
     padding-bottom: 0rem;
     padding-left: 1rem;
     padding-right: 1rem;
 }
 
-/* Estilo para el Título Principal (h1) */
+/* 2. Ajuste del Título para menos espacio */
 h1 {
     font-size: 1.8em !important; 
     color: #4A148C; 
     font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
-    text-align: center; /* CENTRADO DEL TÍTULO */
-    margin-top: 4rem; 
+    text-align: center; 
+    margin-top: 3rem; /* Reducido de 4rem */
     margin-bottom: 0px; 
     padding-top: 0px;
 }
 
-/* Estilo para los Subtítulos de Secciones (h2/h3) */
-h2, h3 {
+/* 3. Estilo para subtítulos (Opciones de Análisis Rápido) */
+h2 {
     font-size: 1.5em !important; 
     color: #00897B; 
     border-bottom: 1px solid #E0F2F1; 
     padding-bottom: 5px;
-    margin-top: 20px;
+    margin-top: 10px; /* Reducido de 20px */
 }
 
-/* Estilo para todo el texto de la aplicación (cuerpo) */
-.stApp {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 1.05em; 
-}
-
-/* NUEVO: Clase para achicar la letra de los checkboxes de los filtros */
+/* 4. Clase para achicar la letra de los checkboxes de los filtros */
 .small-checkbox label {
-    font-size: 0.85em !important; /* Fuente más pequeña */
-    margin: 0px !important; /* Reducir margen vertical entre ellos */
+    font-size: 0.78em !important; /* Achicado un poco más de 0.85em */
+    margin: 0px !important; 
     padding: 2px 0px; 
 }
 
-/* Alineación de los filtros a la derecha y uso de columnas */
-.stCheckbox {
-    margin-bottom: 0px; /* Eliminar espacio inferior estándar */
-}
-
-/* Contenedor general para los filtros agrupados */
+/* 5. Contenedor general para los filtros agrupados (Ajusta el espacio entre grupos) */
 div[data-testid="stHorizontalBlock"] > div:nth-child(2) > div {
     display: flex;
     flex-direction: column;
     padding: 5px;
     border: 1px solid #E0E0E0;
     border-radius: 5px;
-    margin-right: 10px;
-    height: 100%; /* Asegura que el contenedor tenga altura completa */
+    margin-right: 5px; /* Reducido el margen entre columnas de filtro */
+    height: 100%; 
 }
 
 div[data-testid="stHorizontalBlock"] > div:nth-child(2) > div:last-child {
@@ -283,8 +271,9 @@ else:
     
     st.subheader("Opciones de Análisis Rápido") 
     
-    # Creamos 4 columnas: 1 vacío grande para empujar los filtros a la derecha, y 3 para los filtros
-    col_vacio, col_controlados, col_ofertas, col_funcionarios = st.columns([1.5, 1, 1, 1])
+    # Creamos 4 columnas: 
+    # [col_vacio] Reducido de 1.5 a 1.2 para correr los filtros más a la derecha.
+    col_vacio, col_controlados, col_ofertas, col_funcionarios = st.columns([1.2, 1, 1, 1])
 
     
     # --- LÓGICA DE VALIDACIÓN DE FILTROS MUTUAMENTE EXCLUYENTES ---
