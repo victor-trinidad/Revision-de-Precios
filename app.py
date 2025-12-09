@@ -162,9 +162,9 @@ st.set_page_config(page_title="Auditoría Continua de Precios LQF", layout="wide
 # --- INYECCIÓN DE CSS PARA ESTILO, POSICIONAMIENTO Y TAMAÑO DE FUENTE ---
 st.markdown("""
 <style>
-/* 1. Reducción de Espacios Verticales Generales */
+/* 1. Reducción Extrema de Espacios Verticales Generales */
 .block-container {
-    padding-top: 1rem; 
+    padding-top: 0.5rem; /* Máximo acercamiento al tope */
     padding-bottom: 0rem;
     padding-left: 1rem;
     padding-right: 1rem;
@@ -176,7 +176,7 @@ h1 {
     color: #4A148C; 
     font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
     text-align: center; 
-    margin-top: 2.5rem; /* Ultra reducido de 3rem */
+    margin-top: 1rem; /* Máximo acercamiento al tope */
     margin-bottom: 0px; 
     padding-top: 0px;
 }
@@ -186,29 +186,33 @@ h2 {
     font-size: 1.5em !important; 
     color: #00897B; 
     border-bottom: 1px solid #E0F2F1; 
-    padding-bottom: 5px;
-    margin-top: 5px; /* Ultra reducido de 10px */
+    padding-bottom: 2px; /* Reducido */
+    margin-top: 0px; /* Máximo acercamiento */
 }
 
-/* 4. Clase para achicar la letra de los checkboxes de los filtros */
-.small-checkbox label {
-    font-size: 0.75em !important; /* Mantenemos 0.75em o ligeramente más chico */
-    margin: 0px !important; 
-    padding: 1px 0px; /* Reducido a 1px para interlineado mínimo (0.15cm visual) */
-}
-
-/* 5. Títulos de Categoría (st.caption) - CLAVE PARA REDUCIR ESPACIO */
+/* 4. Títulos de Categoría (st.caption) - ELIMINACIÓN DE ESPACIO CLAVE */
 [data-testid="stCaption"] {
-    margin-top: 0px !important;
-    margin-bottom: 0px !important; /* Elimina espacio bajo el título de categoría */
-    padding-top: 0px !important;
-    padding-bottom: 0px !important;
-    font-size: 0.85em !important; /* Dejamos el título un poco más visible */
+    margin: 0px !important; /* Elimina todos los márgenes */
+    padding: 0px !important; /* Elimina todos los paddings */
+    line-height: 1.0; /* Aseguramos interlineado bajo */
+    font-size: 0.85em !important; 
     font-weight: bold;
-    color: #4A148C; /* Color para destacar el título de la categoría */
+    color: #4A148C; 
 }
 
-/* 6. Contenedor de filtros agrupados (Ajusta el espacio entre grupos) */
+/* 5. Checkbox Styling - Máxima compactación vertical (Interlineado de 0,15cm) */
+.small-checkbox {
+    margin-top: 0px; 
+}
+
+.small-checkbox label {
+    font-size: 0.75em !important; /* Letra achicada */
+    margin: 0px !important; 
+    padding: 0.5px 0px; /* **0.5px de padding para interlineado mínimo (0,15cm visual)** */
+    line-height: 1.0; 
+}
+
+/* 6. Contenedor de filtros agrupados */
 div[data-testid="stHorizontalBlock"] > div:nth-child(2) > div {
     display: flex;
     flex-direction: column;
@@ -282,8 +286,8 @@ else:
     
     st.subheader("Opciones de Análisis Rápido") 
     
-    # Columnas: [col_vacio] (1.1) ajustado ligeramente.
-    col_vacio, col_controlados, col_ofertas, col_funcionarios = st.columns([1.1, 1, 1, 1])
+    # Columnas: [col_vacio] (1.3) ajustado para mover a la derecha.
+    col_vacio, col_controlados, col_ofertas, col_funcionarios = st.columns([1.3, 1, 1, 1])
 
     
     # --- LÓGICA DE VALIDACIÓN DE FILTROS MUTUAMENTE EXCLUYENTES ---
@@ -497,83 +501,4 @@ else:
             
             st.dataframe(
                  df_completo[columnas_completas].style.format({
-                    '% Desc': '{:.2f}%',
-                    'Valor neto': 'Gs. {:,.0f}',
-                    'Precio_Objetivo': 'Gs. {:,.2f}',
-                    'Desvío_Precio_Lista': '{:.2f}%',
-                    'Precio_Unitario_Neto_Factura': 'Gs. {:,.2f}'
-                }),
-                use_container_width=True
-            )
-
-            df_export_completo = df_completo[columnas_completas]
-            xlsx_data_completo = to_excel(df_export_completo)
-
-            st.download_button(
-                label="Descargar Listado Completo Auditado en XLSX (Excel)", 
-                data=xlsx_data_completo, 
-                file_name='Reporte_Completo_Auditado_LQF.xlsx', 
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                key="descarga_completa" 
-            )
-            
-        with tab4:
-            st.header("Análisis de Desviación de Precios vs. Objetivo")
-            st.info(f"Se auditaron **{total_transacciones:,}** líneas contra el Precio Objetivo de la Lista SIN IVA. La tolerancia de desvío es de {MAX_PRECIO_DESVIACION}%.")
-
-            df_comparativo = df_completo[df_completo['Desvío_Precio_Lista'].notna()].copy()
-                
-            df_comparativo['Precio Objetivo SIN IVA (Gs.)'] = df_comparativo['Precio_Objetivo'].apply(lambda x: f"Gs. {x:,.0f}")
-            df_comparativo['Precio Facturado Neto (Gs.)'] = df_comparativo['Precio_Unitario_Neto_Factura'].apply(lambda x: f"Gs. {x:,.0f}")
-            df_comparativo['Desvío (%)'] = df_comparativo['Desvío_Precio_Lista'] 
-                
-            columnas_visual_comparativo = [
-                'Codigo', 
-                'Nombre 1', 
-                'Precio Objetivo SIN IVA (Gs.)', 
-                'Precio Facturado Neto (Gs.)', 
-                'Desvío (%)', 
-                'Alerta_Descuento'
-            ]
-                
-            if not df_comparativo.empty:
-                st.subheader("Visualización de Desviaciones de Precio")
-                st.dataframe(
-                    df_comparativo[columnas_visual_comparativo], 
-                    use_container_width=True,
-                    column_config={
-                        "Desvío (%)": st.column_config.ProgressColumn(
-                            "Desvío (%)",
-                            help="Porcentaje de diferencia respecto al Precio Objetivo. Los negativos indican que se facturó a un precio inferior.",
-                            format="%.2f%%",
-                            min_value=-20, 
-                            max_value=10, 
-                            width="medium"
-                        )
-                    }
-                )
-            else:
-                 st.info("No hay datos para el comparativo después de aplicar filtros.")
-
-            columnas_csv_comparativo = [
-                'Fecha factura', 'Nombre 1', 'Solicitante', 'Codigo', 'Material', 
-                'Jerarquia', 'Cant', '% Desc', 'Valor neto', 
-                'Precio_Objetivo', 'Precio_Unitario_Neto_Factura', 'Desvío_Precio_Lista', 
-                'Alerta_Descuento'
-            ]
-                
-            df_export_comparativo = df_completo[df_completo['Desvío_Precio_Lista'].notna()][columnas_csv_comparativo]
-            xlsx_data_comparativo = to_excel(df_export_comparativo)
-
-            st.download_button(
-                label="Descargar Reporte de Comparativo de Precios en XLSX (Detallado)", 
-                data=xlsx_data_comparativo, 
-                file_name='Reporte_Comparativo_Precios_LQF_Detallado.xlsx', 
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                key="descarga_comparativo" 
-            )
-
-    except Exception as e:
-        st.error(f"Ocurrió un error al procesar los datos después de cargarlos. Error: {e}")
-        st.warning("Verifique la estructura de las columnas en sus hojas de cálculo.")
-        st.session_state['file_data'] = None
+                    '% Desc': '{:.2f}%
