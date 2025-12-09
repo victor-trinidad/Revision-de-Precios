@@ -162,61 +162,66 @@ st.set_page_config(page_title="Auditoría Continua de Precios LQF", layout="wide
 # --- INYECCIÓN DE CSS PARA ESTILO, POSICIONAMIENTO Y TAMAÑO DE FUENTE ---
 st.markdown("""
 <style>
-/* 1. Reducción Extrema de Espacios Verticales Generales */
+/* 1. Reducción de Espacios Verticales Generales */
 .block-container {
-    padding-top: 0.5rem; /* Máximo acercamiento al tope */
+    padding-top: 0.5rem; 
     padding-bottom: 0rem;
     padding-left: 1rem;
     padding-right: 1rem;
 }
 
-/* 2. Ajuste del Título para menos espacio */
+/* 2. Ajuste del Título (H1) - CORRECCIÓN DE POSICIÓN */
 h1 {
     font-size: 1.8em !important; 
     color: #4A148C; 
     font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
-    text-align: center; 
-    margin-top: 1rem; /* Máximo acercamiento al tope */
+    text-align: center; /* Asegura el centrado */
+    margin-top: 2rem; /* Separación corregida del tope */
     margin-bottom: 0px; 
     padding-top: 0px;
 }
 
-/* 3. Estilo para subtítulos (Opciones de Análisis Rápido) */
+/* 3. Estilo para subtítulos (H2 - Opciones de Análisis Rápido) */
 h2 {
     font-size: 1.5em !important; 
     color: #00897B; 
     border-bottom: 1px solid #E0F2F1; 
-    padding-bottom: 2px; /* Reducido */
-    margin-top: 0px; /* Máximo acercamiento */
+    padding-bottom: 2px; 
+    margin-top: 5px; /* Pequeño margen después del H1 */
 }
 
-/* 4. Títulos de Categoría (st.caption) - ELIMINACIÓN DE ESPACIO CLAVE */
+/* 4. Títulos de Categoría (st.caption) - MÁXIMA COMPACTACIÓN */
 [data-testid="stCaption"] {
     margin: 0px !important; /* Elimina todos los márgenes */
     padding: 0px !important; /* Elimina todos los paddings */
-    line-height: 1.0; /* Aseguramos interlineado bajo */
+    line-height: 1.0; 
     font-size: 0.85em !important; 
     font-weight: bold;
     color: #4A148C; 
 }
 
-/* 5. Checkbox Styling - Máxima compactación vertical (Interlineado de 0,15cm) */
-.small-checkbox {
-    margin-top: 0px; 
+/* 5. Checkbox Styling - MÁXIMO ACERCAMIENTO Y MÍNIMO INTERLINEADO */
+
+/* Elimina el margen inherente del contenedor de la línea del checkbox */
+div.stCheckbox {
+    margin: 0px !important;
+    padding: 0px !important;
 }
 
+/* Clase para achicar la letra y eliminar el padding interno */
 .small-checkbox label {
-    font-size: 0.75em !important; /* Letra achicada */
+    font-size: 0.75em !important; 
     margin: 0px !important; 
-    padding: 0.5px 0px; /* **0.5px de padding para interlineado mínimo (0,15cm visual)** */
+    padding: 0px 0px; /* CERO vertical padding para interlineado mínimo */
     line-height: 1.0; 
 }
 
-/* 6. Contenedor de filtros agrupados */
+
+/* 6. Contenedor de filtros agrupados (Ajusta el espacio entre grupos) */
 div[data-testid="stHorizontalBlock"] > div:nth-child(2) > div {
     display: flex;
     flex-direction: column;
-    padding: 3px; /* Reducido el padding interno */
+    padding: 2px; /* Reducido el padding interno */
     border: 1px solid #E0E0E0;
     border-radius: 5px;
     margin-right: 5px; 
