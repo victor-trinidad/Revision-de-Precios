@@ -170,24 +170,23 @@ st.markdown("""
     padding-right: 1rem;
 }
 
-/* 2. Ajuste del Título (H1) - CORRECCIÓN DE POSICIÓN */
+/* 2. Ajuste del Título (H1) - POSICIÓN CORREGIDA */
 h1 {
     font-size: 1.8em !important; 
     color: #4A148C; 
     font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
-    text-align: center; /* Asegura el centrado */
-    margin-top: 2rem; /* Separación corregida del tope */
+    text-align: center; 
+    margin-top: 2rem; /* Separación estable y adecuada */
     margin-bottom: 0px; 
     padding-top: 0px;
 }
 
-/* 3. Estilo para subtítulos (H2 - Opciones de Análisis Rápido) */
+/* 3. Estilo para subtítulos (H2 - Ahora INVISIBLE al ser eliminado el st.subheader) */
 h2 {
-    font-size: 1.5em !important; 
-    color: #00897B; 
-    border-bottom: 1px solid #E0F2F1; 
-    padding-bottom: 2px; 
-    margin-top: 5px; /* Pequeño margen después del H1 */
+    /* Mantener las reglas para otros usos de h2, pero no se usará aquí */
+    padding-bottom: 0px; 
+    margin-top: 0px;
+    margin-bottom: 0px;
 }
 
 /* 4. Títulos de Categoría (st.caption) - MÁXIMA COMPACTACIÓN */
@@ -289,8 +288,8 @@ else:
     
     # 2. INTERFAZ DE FILTROS (3 Grupos en Columnas)
     
-    st.subheader("Opciones de Análisis Rápido") 
-    
+    # st.subheader("Opciones de Análisis Rápido") <--- ELIMINADO
+
     # Columnas: [col_vacio] (1.3) ajustado para mover a la derecha.
     col_vacio, col_controlados, col_ofertas, col_funcionarios = st.columns([1.3, 1, 1, 1])
 
