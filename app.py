@@ -150,9 +150,9 @@ st.set_page_config(page_title="Auditoría Continua de Precios LQF", layout="wide
 # --- INYECCIÓN DE CSS PARA ESTILO Y POSICIONAMIENTO SUPERIOR Y CENTRADO ---
 st.markdown("""
 <style>
-/* Elimina el relleno superior del cuerpo principal de la app */
+/* Aumenta el padding-top del contenedor principal para dar más espacio arriba */
 .block-container {
-    padding-top: 0rem; 
+    padding-top: 2rem; 
     padding-bottom: 0rem;
     padding-left: 1rem;
     padding-right: 1rem;
@@ -164,8 +164,9 @@ h1 {
     color: #4A148C; 
     font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
     text-align: center; /* CENTRADO DEL TÍTULO */
+    /* MARGEN AUMENTADO A 4rem para evitar la superposición con el header fijo de Streamlit */
+    margin-top: 4rem; 
     margin-bottom: 0px; 
-    margin-top: 2rem; /* AJUSTE DE MARGEN A 2 CM (2rem) */
     padding-top: 0px;
 }
 
