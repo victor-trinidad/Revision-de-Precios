@@ -165,7 +165,7 @@ h1 {
     font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
     text-align: center; /* CENTRADO DEL TÍTULO */
     margin-bottom: 0px; 
-    margin-top: 1rem; /* Aproximadamente 1cm de margen superior */
+    margin-top: 2rem; /* AJUSTE DE MARGEN A 2 CM (2rem) */
     padding-top: 0px;
 }
 
