@@ -149,8 +149,8 @@ def ejecutar_auditoria(df_ventas, df_precios):
     ]
 
 
-    df_audit['Alerta_Descuento'] = np.select(condiciones, etiquetas_alerta, default='OK')
-    desvios_encontrados = df_audit[df_audit['Alerta_Descuento'] != 'OK']
+    df_audit['Alerta_Descuento'] = np.select(condiciones, etiquetas_alerta, default='✅ OK')
+    desvios_encontrados = df_audit[df_audit['Alerta_Descuento'] != '✅ OK']
     
     return desvios_encontrados, df_audit
 
@@ -279,26 +279,26 @@ if uploaded_file is not None:
         with tab1:
             st.header("Métricas Clave de Cumplimiento")
             
-            # Display de KPIs
+            # Display de KPIs con formato y color
             col1, col2, col3, col4 = st.columns(4)
             col1.metric("Transacciones Auditadas", f"{total_transacciones:,}")
-            col2.metric("Transacciones con Desvío", f"{transacciones_desviadas:,}", delta=f"{transacciones_desviadas} líneas de riesgo")
+            col2.metric("Transacciones con Desvío", f"{transacciones_desviadas:,}", delta=f"{transacciones_desviadas} líneas de riesgo", delta_color="inverse")
             col3.metric("Nivel de Cumplimiento", f"{porcentaje_cumplimiento:.2f}%", delta=f"{(100 - porcentaje_cumplimiento):.2f}% de Incumplimiento", delta_color="inverse")
             col4.metric("Valor Neto de Desvíos (Gs.)", f"Gs. {valor_neto_desviado:,.0f}")
             
             st.markdown("---") 
             
             if not desvios.empty:
-                st.info(f"Se encontraron **{transacciones_desviadas:,}** transacciones con desvío. Revise la pestaña 'Análisis Detallado de Riesgo'.")
+                st.error(f"Se encontraron **{transacciones_desviadas:,}** transacciones con desvío. Revise la pestaña 'Análisis Detallado de Riesgo'.")
             else:
                 st.subheader("✅ ¡CUMPLIMIENTO TOTAL!")
-                st.info("No se encontraron desviaciones en este reporte según las reglas definidas.")
+                st.success("No se encontraron desviaciones en este reporte según las reglas definidas.")
 
         with tab2:
             if not desvios.empty:
                 st.subheader("Gráfico de Riesgo: Distribución de Alertas por Tipo")
                 
-                # Gráfico de Barras
+                # Gráfico de Barras (Usando el color rojo para el riesgo)
                 alerta_counts = desvios['Alerta_Descuento'].value_counts().reset_index()
                 alerta_counts.columns = ['Tipo de Alerta', 'Cantidad de Desvíos']
                 alerta_counts = alerta_counts.set_index('Tipo de Alerta')
@@ -317,7 +317,16 @@ if uploaded_file is not None:
                 columnas_auditoria.insert(9, 'Desvío_Precio_Lista') 
                 columnas_auditoria.insert(10, 'Precio_Unitario_Neto_Factura') 
                      
-                st.dataframe(desvios[columnas_auditoria], use_container_width=True)
+                st.dataframe(
+                    desvios[columnas_auditoria].style.format({
+                        '% Desc': '{:.2f}%',
+                        'Valor neto': 'Gs. {:,.0f}',
+                        'Precio_Objetivo': 'Gs. {:,.2f}',
+                        'Desvío_Precio_Lista': '{:.2f}%',
+                        'Precio_Unitario_Neto_Factura': 'Gs. {:,.2f}'
+                    }), 
+                    use_container_width=True
+                )
                 
                 # Opción para descargar solo los desvíos (XLSX)
                 df_export_desvios = desvios[columnas_auditoria]
@@ -345,8 +354,17 @@ if uploaded_file is not None:
             columnas_completas.insert(10, 'Desvío_Precio_Lista')
             columnas_completas.insert(11, 'Precio_Unitario_Neto_Factura')
             
-            # Display del DataFrame completo
-            st.dataframe(df_completo[columnas_completas], use_container_width=True)
+            # Display del DataFrame completo con formato
+            st.dataframe(
+                 df_completo[columnas_completas].style.format({
+                    '% Desc': '{:.2f}%',
+                    'Valor neto': 'Gs. {:,.0f}',
+                    'Precio_Objetivo': 'Gs. {:,.2f}',
+                    'Desvío_Precio_Lista': '{:.2f}%',
+                    'Precio_Unitario_Neto_Factura': 'Gs. {:,.2f}'
+                }),
+                use_container_width=True
+            )
 
             # Opción para descargar el archivo completo con la columna de alerta (XLSX)
             df_export_completo = df_completo[columnas_completas]
@@ -362,7 +380,7 @@ if uploaded_file is not None:
             
         with tab4:
             st.header("Análisis de Desviación de Precios vs. Objetivo")
-            st.info(f"Se auditaron {total_transacciones:,} líneas contra el Precio Objetivo de la Lista SIN IVA. La tolerancia de desvío es de {MAX_PRECIO_DESVIACION}%.")
+            st.info(f"Se auditaron **{total_transacciones:,}** líneas contra el Precio Objetivo de la Lista SIN IVA. La tolerancia de desvío es de {MAX_PRECIO_DESVIACION}%.")
 
             # Filtrar solo donde la comparación fue posible y hay un desvío calculado
             df_comparativo = df_completo[df_completo['Desvío_Precio_Lista'].notna()].copy()
@@ -370,7 +388,7 @@ if uploaded_file is not None:
             # Dar formato a las columnas numéricas para visualización
             df_comparativo['Precio Objetivo SIN IVA (Gs.)'] = df_comparativo['Precio_Objetivo'].apply(lambda x: f"Gs. {x:,.0f}")
             df_comparativo['Precio Facturado Neto (Gs.)'] = df_comparativo['Precio_Unitario_Neto_Factura'].apply(lambda x: f"Gs. {x:,.0f}")
-            df_comparativo['Desvío (%)'] = df_comparativo['Desvío_Precio_Lista'].apply(lambda x: f"{x:,.2f}%")
+            df_comparativo['Desvío (%)'] = df_comparativo['Desvío_Precio_Lista'] # Usamos la columna numérica para la barra de progreso
                 
             # Seleccionar las columnas para la tabla de comparación
             columnas_visual_comparativo = [
@@ -382,12 +400,22 @@ if uploaded_file is not None:
                 'Alerta_Descuento'
             ]
                 
-            # Mostramos la tabla solo si no está vacía
+            # Mostramos la tabla con barra de progreso
             if not df_comparativo.empty:
+                st.subheader("Visualización de Desviaciones de Precio")
                 st.dataframe(
                     df_comparativo[columnas_visual_comparativo], 
                     use_container_width=True,
-                    # Se elimina la configuración de columna para no tener que depender de esa configuración compleja.
+                    column_config={
+                        "Desvío (%)": st.column_config.ProgressColumn(
+                            "Desvío (%)",
+                            help="Porcentaje de diferencia respecto al Precio Objetivo. Los negativos indican que se facturó a un precio inferior.",
+                            format="%.2f%%",
+                            min_value=-20, # Rango de visualización de -20% a 10%
+                            max_value=10, 
+                            width="medium"
+                        )
+                    }
                 )
             else:
                  st.info("No hay datos para el comparativo después de aplicar filtros.")
