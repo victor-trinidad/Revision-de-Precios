@@ -501,4 +501,83 @@ else:
             
             st.dataframe(
                  df_completo[columnas_completas].style.format({
-                    '% Desc': '{:.2f}%
+                    '% Desc': '{:.2f}%',
+                    'Valor neto': 'Gs. {:,.0f}',
+                    'Precio_Objetivo': 'Gs. {:,.2f}',
+                    'Desvío_Precio_Lista': '{:.2f}%',
+                    'Precio_Unitario_Neto_Factura': 'Gs. {:,.2f}'
+                }),
+                use_container_width=True
+            )
+
+            df_export_completo = df_completo[columnas_completas]
+            xlsx_data_completo = to_excel(df_export_completo)
+
+            st.download_button(
+                label="Descargar Listado Completo Auditado en XLSX (Excel)", 
+                data=xlsx_data_completo, 
+                file_name='Reporte_Completo_Auditado_LQF.xlsx', 
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                key="descarga_completa" 
+            )
+            
+        with tab4:
+            st.header("Análisis de Desviación de Precios vs. Objetivo")
+            st.info(f"Se auditaron **{total_transacciones:,}** líneas contra el Precio Objetivo de la Lista SIN IVA. La tolerancia de desvío es de {MAX_PRECIO_DESVIACION}%.")
+
+            df_comparativo = df_completo[df_completo['Desvío_Precio_Lista'].notna()].copy()
+                
+            df_comparativo['Precio Objetivo SIN IVA (Gs.)'] = df_comparativo['Precio_Objetivo'].apply(lambda x: f"Gs. {x:,.0f}")
+            df_comparativo['Precio Facturado Neto (Gs.)'] = df_comparativo['Precio_Unitario_Neto_Factura'].apply(lambda x: f"Gs. {x:,.0f}")
+            df_comparativo['Desvío (%)'] = df_comparativo['Desvío_Precio_Lista'] 
+                
+            columnas_visual_comparativo = [
+                'Codigo', 
+                'Nombre 1', 
+                'Precio Objetivo SIN IVA (Gs.)', 
+                'Precio Facturado Neto (Gs.)', 
+                'Desvío (%)', 
+                'Alerta_Descuento'
+            ]
+                
+            if not df_comparativo.empty:
+                st.subheader("Visualización de Desviaciones de Precio")
+                st.dataframe(
+                    df_comparativo[columnas_visual_comparativo], 
+                    use_container_width=True,
+                    column_config={
+                        "Desvío (%)": st.column_config.ProgressColumn(
+                            "Desvío (%)",
+                            help="Porcentaje de diferencia respecto al Precio Objetivo. Los negativos indican que se facturó a un precio inferior.",
+                            format="%.2f%%",
+                            min_value=-20, 
+                            max_value=10, 
+                            width="medium"
+                        )
+                    }
+                )
+            else:
+                 st.info("No hay datos para el comparativo después de aplicar filtros.")
+
+            columnas_csv_comparativo = [
+                'Fecha factura', 'Nombre 1', 'Solicitante', 'Codigo', 'Material', 
+                'Jerarquia', 'Cant', '% Desc', 'Valor neto', 
+                'Precio_Objetivo', 'Precio_Unitario_Neto_Factura', 'Desvío_Precio_Lista', 
+                'Alerta_Descuento'
+            ]
+                
+            df_export_comparativo = df_completo[df_completo['Desvío_Precio_Lista'].notna()][columnas_csv_comparativo]
+            xlsx_data_comparativo = to_excel(df_export_comparativo)
+
+            st.download_button(
+                label="Descargar Reporte de Comparativo de Precios en XLSX (Detallado)", 
+                data=xlsx_data_comparativo, 
+                file_name='Reporte_Comparativo_Precios_LQF_Detallado.xlsx', 
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                key="descarga_comparativo" 
+            )
+
+    except Exception as e:
+        st.error(f"Ocurrió un error al procesar los datos después de cargarlos. Error: {e}")
+        st.warning("Verifique la estructura de las columnas en sus hojas de cálculo.")
+        st.session_state['file_data'] = None
