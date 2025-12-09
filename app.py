@@ -147,7 +147,7 @@ def to_excel(df):
 st.set_page_config(page_title="Auditoría Continua de Precios LQF", layout="wide")
 
 
-# --- INYECCIÓN DE CSS PARA ESTILO Y POSICIONAMIENTO SUPERIOR Y CENTRADO ---
+# --- INYECCIÓN DE CSS PARA ESTILO, POSICIONAMIENTO Y TAMAÑO DE FUENTE ---
 st.markdown("""
 <style>
 /* Aumenta el padding-top del contenedor principal para dar más espacio arriba */
@@ -183,6 +183,23 @@ h2, h3 {
 .stApp {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 1.05em; 
+}
+
+/* NUEVO: Clase para achicar la letra de los checkboxes de los filtros */
+.small-checkbox label {
+    font-size: 0.85em !important; /* Fuente más pequeña */
+    margin: 0px !important; /* Reducir margen vertical entre ellos */
+    padding: 2px 0px; 
+}
+
+/* Alineación de los filtros a la derecha */
+.stCheckbox {
+    margin-bottom: 0px; /* Eliminar espacio inferior estándar */
+}
+
+/* Pequeño ajuste para eliminar el espacio del subtítulo "Opciones de Análisis Rápido" */
+header[data-testid="stHeader"] {
+    height: 40px; /* Reducir altura del header de Streamlit si es necesario */
 }
 </style>
 """, unsafe_allow_html=True)
@@ -244,40 +261,42 @@ else:
         st.stop()
 
 
-    # 2. INTERFAZ DE FILTROS 
-    st.subheader("Opciones de Análisis Rápido")
+    # 2. INTERFAZ DE FILTROS (AJUSTADA AL MARGEN SUPERIOR DERECHO)
     
-    # --- FILTROS DE EXCLUSIÓN ---
-    st.markdown("### 🚫 1. Filtros de Exclusión de Canales")
-    col_excluir1, col_excluir2, col_espacio1 = st.columns([1.5, 1.5, 4])
+    # Creamos un espacio vacío para empujar los filtros a la derecha
+    # y usamos st.container para aplicar la clase CSS a los checkboxes
     
-    with col_excluir1:
+    col_vacio, col_filtros = st.columns([4, 1.5])
+    
+    with col_vacio:
+        # Esto oculta el subtítulo del Dashboard
+        st.subheader("") 
+        
+    with col_filtros:
+        # Aplicamos la clase CSS para achicar la letra
+        st.markdown('<div class="small-checkbox">', unsafe_allow_html=True)
+        st.caption("**Filtros Rápidos**")
+        
+        # --- FILTROS DE EXCLUSIÓN ---
         excluir_empleados = st.checkbox(
-            'Excluir Canales de Empleados/Médicos', 
+            'Excluir Empleados/Médicos', 
             value=True, 
             key='check_excluir_empleados',
-            help='Excluye ventas con Zona de Venta: EMPLEADOS LQF y MEDICOS PARTICULARES.'
         )
 
-    with col_excluir2:
         excluir_1012 = st.checkbox(
-            'Excluir Almacén de Ofertas (1012)', 
+            'Excluir Almacén 1012 (Ofertas)', 
             value=True, 
             key='check_excluir_1012',
-            help='Excluye ventas provenientes del Almacén 1012 (Ofertas).'
         )
 
-    # --- FILTROS DE INCLUSIÓN ---
-    st.markdown("### ✨ 2. Filtros de Materiales")
-    col_incluir1, col_espacio2 = st.columns([3, 4])
-
-    with col_incluir1:
+        # --- FILTROS DE INCLUSIÓN ---
         ver_solo_controlados = st.checkbox(
-            'Ver **SOLO** Materiales Controlados', 
+            'Ver SOLO Materiales Controlados', 
             value=False, 
             key='check_solo_controlados',
-            help='Limita la auditoría solo a los códigos que están en la lista de control (Ignora todos los demás).'
         )
+        st.markdown('</div>', unsafe_allow_html=True)
         
     st.markdown("---") 
     
