@@ -57,31 +57,57 @@ def ejecutar_auditoria(df_ventas, df_precios):
     # Normalizar y limpiar la tabla de precios
     df_precios.columns = df_precios.columns.str.strip()
     
-    # Renombrar columnas específicas del listado de precios
+    # Renombrar columnas específicas del listado de precios (Incluyendo IVA)
     price_column_mapping = {
         'Codigo': 'Codigo', 
+        'IVA': 'IVA_Lista', # Renombramos para evitar confusión con el IVA de Factura
         'Precio de Factura con Descuento': 'Precio_Farmacia_Target', 
         'Precio Intercompany': 'Precio_Intercompany_Target'
     }
     df_precios = df_precios.rename(columns=price_column_mapping)
     
-    # Seleccionar solo las columnas necesarias y asegurar que 'Codigo' sea string
-    cols_a_unir = ['Codigo', 'Precio_Farmacia_Target', 'Precio_Intercompany_Target']
+    # Seleccionar solo las columnas necesarias y asegurar formatos
+    cols_a_unir = ['Codigo', 'IVA_Lista', 'Precio_Farmacia_Target', 'Precio_Intercompany_Target'] 
     df_precios = df_precios[cols_a_unir]
     df_precios['Codigo'] = df_precios['Codigo'].astype(str)
+    df_precios['IVA_Lista'] = pd.to_numeric(df_precios['IVA_Lista'], errors='coerce').fillna(0) 
     
     # Merge de las dos tablas.
     df_audit = pd.merge(df_audit, df_precios, on='Codigo', how='left')
     
-    # Rellenar con 0 para evitar errores en cálculos
+    # --- AJUSTE CRÍTICO: QUITAR EL IVA DEL PRECIO OBJETIVO (PARA COMPARAR CON NETO) ---
+    
+    # Calcular el factor de ajuste (1 + IVA)
+    df_audit['Factor_IVA'] = 1 + df_audit['IVA_Lista']
+    # Si el IVA es 0, el Factor_IVA es 1. Usamos NaN si es <= 1 para manejar la división condicional.
+    df_audit['Factor_IVA'] = np.where(df_audit['Factor_IVA'] <= 1, np.nan, df_audit['Factor_IVA']) 
+
+    # Asegurar que las columnas existan y sean numéricas antes del cálculo
     df_audit['Precio_Farmacia_Target'] = pd.to_numeric(df_audit['Precio_Farmacia_Target'], errors='coerce').fillna(0)
     df_audit['Precio_Intercompany_Target'] = pd.to_numeric(df_audit['Precio_Intercompany_Target'], errors='coerce').fillna(0)
     
-    # Lógica para seleccionar el precio objetivo correcto por línea
+    # Calcular precios objetivos SIN IVA
+    df_audit['Precio_Farmacia_Target_SIN_IVA'] = np.where(
+        df_audit['Factor_IVA'].notna(), 
+        df_audit['Precio_Farmacia_Target'] / df_audit['Factor_IVA'],
+        df_audit['Precio_Farmacia_Target'] # Si Factor_IVA es NaN (IVA es 0), no dividimos
+    )
+    
+    df_audit['Precio_Intercompany_Target_SIN_IVA'] = np.where(
+        df_audit['Factor_IVA'].notna(), 
+        df_audit['Precio_Intercompany_Target'] / df_audit['Factor_IVA'],
+        df_audit['Precio_Intercompany_Target']
+    )
+    
+    # Rellenar con 0
+    df_audit['Precio_Farmacia_Target_SIN_IVA'] = df_audit['Precio_Farmacia_Target_SIN_IVA'].fillna(0)
+    df_audit['Precio_Intercompany_Target_SIN_IVA'] = df_audit['Precio_Intercompany_Target_SIN_IVA'].fillna(0)
+    
+    # Lógica para seleccionar el precio objetivo final (SIN IVA)
     df_audit['Precio_Objetivo'] = np.where(
         (df_audit['Solicitante'] == CLIENTE_200046) | (df_audit['Solicitante'] == CLIENTE_200173),
-        df_audit['Precio_Intercompany_Target'],
-        df_audit['Precio_Farmacia_Target']
+        df_audit['Precio_Intercompany_Target_SIN_IVA'],
+        df_audit['Precio_Farmacia_Target_SIN_IVA']
     )
     
     # Calcular el precio neto por unidad en la factura
@@ -286,7 +312,7 @@ if uploaded_file is not None:
                 # Columnas base para la auditoría
                 columnas_auditoria = ['Fecha factura', 'Almacen', 'Nombre 1', 'Codigo', 'Material', 'Jerarquia', '% Desc', 'Valor neto', 'Alerta_Descuento']
                 
-                # Incluir las nuevas columnas de precio (siempre activas en este flujo)
+                # Incluir las nuevas columnas de precio
                 columnas_auditoria.insert(8, 'Precio_Objetivo') 
                 columnas_auditoria.insert(9, 'Desvío_Precio_Lista') 
                 columnas_auditoria.insert(10, 'Precio_Unitario_Neto_Factura') 
@@ -336,42 +362,38 @@ if uploaded_file is not None:
             
         with tab4:
             st.header("Análisis de Desviación de Precios vs. Objetivo")
-            st.info(f"Se auditaron {total_transacciones:,} líneas contra el Precio Objetivo de la Lista. La tolerancia de desvío es de {MAX_PRECIO_DESVIACION}%.")
+            st.info(f"Se auditaron {total_transacciones:,} líneas contra el Precio Objetivo de la Lista SIN IVA. La tolerancia de desvío es de {MAX_PRECIO_DESVIACION}%.")
 
             # Filtrar solo donde la comparación fue posible y hay un desvío calculado
             df_comparativo = df_completo[df_completo['Desvío_Precio_Lista'].notna()].copy()
                 
             # Dar formato a las columnas numéricas para visualización
-            df_comparativo['Precio Objetivo (Gs.)'] = df_comparativo['Precio_Objetivo'].apply(lambda x: f"Gs. {x:,.0f}")
-            df_comparativo['Precio Facturado (Gs.)'] = df_comparativo['Precio_Unitario_Neto_Factura'].apply(lambda x: f"Gs. {x:,.0f}")
+            df_comparativo['Precio Objetivo SIN IVA (Gs.)'] = df_comparativo['Precio_Objetivo'].apply(lambda x: f"Gs. {x:,.0f}")
+            df_comparativo['Precio Facturado Neto (Gs.)'] = df_comparativo['Precio_Unitario_Neto_Factura'].apply(lambda x: f"Gs. {x:,.0f}")
             df_comparativo['Desvío (%)'] = df_comparativo['Desvío_Precio_Lista'].apply(lambda x: f"{x:,.2f}%")
                 
             # Seleccionar las columnas para la tabla de comparación
             columnas_visual_comparativo = [
                 'Codigo', 
                 'Nombre 1', 
-                'Precio Objetivo (Gs.)', 
-                'Precio Facturado (Gs.)', 
+                'Precio Objetivo SIN IVA (Gs.)', 
+                'Precio Facturado Neto (Gs.)', 
                 'Desvío (%)', 
                 'Alerta_Descuento'
             ]
                 
-            st.dataframe(
-                df_comparativo[columnas_visual_comparativo], 
-                use_container_width=True,
-                column_config={
-                    "Desvío (%)": st.column_config.ProgressColumn(
-                        "Desvío (%)",
-                        help="Porcentaje de diferencia respecto al Precio Objetivo. Los negativos indican que se facturó a un precio inferior.",
-                        format="%.2f%%",
-                        min_value=-20,
-                        max_value=10, 
-                        width="medium"
-                    )
-                }
-            )
+            # Mostramos la tabla solo si no está vacía
+            if not df_comparativo.empty:
+                st.dataframe(
+                    df_comparativo[columnas_visual_comparativo], 
+                    use_container_width=True,
+                    # Se elimina la configuración de columna para no tener que depender de esa configuración compleja.
+                )
+            else:
+                 st.info("No hay datos para el comparativo después de aplicar filtros.")
 
-            # --- Lógica de Descarga Optimizada para XLSX ---
+
+            # --- Lógica de Descarga Optimizada para XLSX (Este es el botón que queremos mantener) ---
             columnas_csv_comparativo = [
                 'Fecha factura', 'Nombre 1', 'Solicitante', 'Codigo', 'Material', 
                 'Jerarquia', 'Cant', '% Desc', 'Valor neto', 
