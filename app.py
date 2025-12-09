@@ -167,20 +167,21 @@ st.markdown(f"""
 <style>
 /* 1. Reducción/Ajuste de Espacios Verticales Generales */
 .block-container {{
-    padding-top: 1.5rem; /* AUMENTADO: Desplaza la aplicación más abajo */
+    padding-top: 1.5rem; 
     padding-bottom: 0rem;
     padding-left: 1rem;
     padding-right: 1rem;
 }}
 
-/* 2. Ajuste del Título (H1) - COLOR INSTITUCIONAL TURQUESA Y ESPACIO AUMENTADO */
+/* 2. Ajuste del Título (H1) - COLOR INSTITUCIONAL TURQUESA, ESPACIO Y MAYÚSCULAS */
 h1 {{
     font-size: 1.8em !important; 
     color: {COLOR_INSTITUCIONAL}; /* Turquesa */
     font-family: 'Segoe UI Black', 'Arial Black', sans-serif; 
     text-align: center; 
-    margin-top: 2.5rem !important; /* AUMENTADO: Más espacio por encima del título */
-    margin-bottom: 1.5rem !important; /* Espacio debajo del título */
+    text-transform: uppercase; /* <--- APLICAR MAYÚSCULAS */
+    margin-top: 2.5rem !important; 
+    margin-bottom: 1.5rem !important; 
     padding-top: 0px !important;
 }}
 
