@@ -298,6 +298,7 @@ if uploaded_file is not None:
                     data=xlsx_data_desvios, 
                     file_name='Reporte_Desviaciones_LQF.xlsx', 
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    key="descarga_alertas" # CLAVE AÑADIDA
                 )
                 
             else:
@@ -326,6 +327,7 @@ if uploaded_file is not None:
                 data=xlsx_data_completo, 
                 file_name='Reporte_Completo_Auditado_LQF.xlsx', 
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                key="descarga_completa" # CLAVE AÑADIDA
             )
             
         with tab4:
@@ -381,6 +383,7 @@ if uploaded_file is not None:
                 data=xlsx_data_comparativo, 
                 file_name='Reporte_Comparativo_Precios_LQF_Detallado.xlsx', 
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                key="descarga_comparativo" # CLAVE AÑADIDA
             )
 
     except Exception as e:
