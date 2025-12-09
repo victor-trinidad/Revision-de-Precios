@@ -36,7 +36,6 @@ def ejecutar_auditoria(df_ventas, df_precios):
     # 1. LIMPIEZA AUTOMÁTICA DE ENCABEZADOS Y NORMALIZACIÓN DE COLUMNAS DE VENTA
     df_ventas.columns = df_ventas.columns.str.strip()
     column_mapping = {
-        # Mapeo de columnas de Ventas (Reporte de Facturación)
         'Fecha factura': 'Fecha factura', 'Almacen': 'Almacen', 'Tipo Venta': 'Tipo Venta',
         'Zona de Venta': 'Zona de Venta', 'Solicitante': 'Solicitante', 'Nombre 1': 'Nombre 1',
         'Codigo': 'Codigo', 'Material': 'Material', 'Jerarquia': 'Jerarquia',
@@ -147,39 +146,34 @@ def to_excel(df):
 st.set_page_config(page_title="Auditoría Continua de Precios LQF", layout="wide")
 st.title("🛡️ Dashboard de Auditoría de Desviaciones de Precios - LQF")
 
-# --- CARGA DE ARCHIVOS EN LA BARRA LATERAL (SIEMPRE VISIBLE) ---
-with st.sidebar:
-    st.header("⚙️ Carga de Reporte Único")
-    
-    # UPLOADER DE ARCHIVO
-    uploaded_file = st.file_uploader(
-        "1. Subir Archivo Único de Auditoría (.xlsx)", 
-        type=['xlsx'], 
-        key="auditoria_file",
-        help="El archivo Excel debe contener dos hojas nombradas exactamente: 'Facturacion' y 'Listado de Precios'."
-    )
-    
-    st.markdown("---")
-    st.info("Utilice los filtros del cuerpo principal para ajustar el alcance de la auditoría una vez cargado el archivo.")
-
+# 1. Definir el file_uploader en el cuerpo principal
+uploaded_file = st.file_uploader(
+    "1. Subir Archivo Único de Auditoría (.xlsx)", 
+    type=['xlsx'], 
+    key="auditoria_file",
+    help="El archivo Excel debe contener dos hojas nombradas exactamente: 'Facturacion' y 'Listado de Precios'."
+)
 
 # --- LÓGICA DE PANTALLA CONDICIONAL ---
 if uploaded_file is None:
     # ----------------------------------------------------
     # ESTADO 1: PANTALLA DE BIENVENIDA (NO HAY ARCHIVO)
     # ----------------------------------------------------
+    
+    # Se añade espacio para que el mensaje no esté pegado al uploader
+    st.markdown("---")
+    
     st.image("https://i.imgur.com/gK9q0vP.png", width=150) # Placeholder de imagen, puedes reemplazarlo
     st.markdown("# ¡Bienvenido al Analizador de Desviaciones de Precios!")
     st.markdown("""
         Esta herramienta automatiza la auditoría de las transacciones de ventas contra las reglas de descuento y precios objetivos de LQF.
 
         ### ➡️ Instrucciones:
-        1. **Vaya a la barra lateral izquierda** (o haga click en `>` si está oculta).
-        2. **Suba el archivo Excel (.xlsx)** que contiene los datos de facturación y el listado de precios.
-        3. El archivo debe contener **dos hojas** con los nombres exactos:
+        1. **Suba el archivo Excel (.xlsx)** en el campo de arriba.
+        2. El archivo debe contener **dos hojas** con los nombres exactos:
            - **`Facturacion`**
            - **`Listado de Precios`**
-        4. Una vez cargado, el dashboard de análisis aparecerá automáticamente.
+        3. Una vez cargado, el dashboard de análisis aparecerá automáticamente.
     """)
     st.warning("⚠️ Asegúrese de que los nombres de las hojas sean correctos para evitar errores en la lectura de datos.")
 
