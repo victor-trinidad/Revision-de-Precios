@@ -7,14 +7,14 @@ from io import BytesIO
 COLOR_INSTITUCIONAL = "#36B7BA"   # Turquesa (Principal para títulos, acentos, gráficos)
 COLOR_GRIS_BORDE = "#CCCCCC"     # Gris claro (Para bordes sutiles y contenedores)
 COLOR_TEXTO_PRINCIPAL = "#000000" # Negro forzado para legibilidad
-COLOR_CHECKBOX_GRIS = "#BFBFBF"  # Gris oscuro para los textos de filtros
-COLOR_CHECKBOX_BORDE_NO_TILDADO = "#BFBFBF" # Gris medio para el símbolo vacío
+COLOR_CHECKBOX_GRIS = "#666666"  # Gris oscuro para los textos de filtros
+COLOR_CHECKBOX_BORDE_INACTIVO = "#BFBFBF" # Gris muy claro para el símbolo vacío (la nueva solicitud)
 
 # Inicializar st.session_state para almacenar el archivo después de presionar "Procesar"
 if 'file_data' not in st.session_state:
     st.session_state['file_data'] = None
 
-# --- 1. CONFIGURACIÓN DE PÁGINA Y PARÁMETROS (Sin cambios) ---
+# --- 1. CONFIGURACIÓN DE PÁGINA Y PARÁMETROS (Sin cambios en la lógica) ---
 codigos_controlados = [
     '3000113', '3000114', '3000080', '3000082', '3000083', '3000084', '3000085',
     '3000098', '3001265', '3001266', '3001267', '3001894', '3001896', '3002906',
@@ -238,11 +238,12 @@ div[data-testid="stMetric"] {{
     color: {COLOR_CHECKBOX_GRIS} !important; 
 }}
 
-/* Modificar el color del símbolo del checkbox no tildado (el cuadrado vacío) */
-/* El selector 'svg' apunta al icono de Streamlit */
+/* MODIFICACIÓN CLAVE: Modificar el color del símbolo del checkbox no tildado (el cuadrado vacío) */
+/* Asegura que el borde (stroke) y el relleno (fill) sean grises cuando no está marcado */
 div.stCheckbox > label > div > div > div > svg {{
-    fill: {COLOR_CHECKBOX_BORDE_NO_TILDADO}; /* Color del símbolo (relleno) cuando está vacío/sin marcar */
-    stroke: {COLOR_CHECKBOX_BORDE_NO_TILDADO}; /* Color del borde cuando está vacío/sin marcar */
+    /* Forzar que el icono vacío tenga el color gris deseado (#BFBFBF) */
+    stroke: {COLOR_CHECKBOX_BORDE_INACTIVO} !important; 
+    fill: {COLOR_CHECKBOX_BORDE_INACTIVO} !important;
 }}
 
 /* 7. Contenedor de filtros agrupados (Bordes Gris Claro) */
@@ -285,7 +286,7 @@ if st.session_state['file_data'] is None:
                 "", 
                 type=['xlsx'], 
                 key="auditoria_file_temp",
-                help="El archivo Excel debe contener dos hojas nombradas exactamente: 'Facturacion' y 'Listado de Precios'."
+                help="El archivo Excel debe contener dos hojas llamadas exactamente: 'Facturacion' y 'Listado de Precios'."
             )
             submitted = st.form_submit_button("➡️ PROCESAR DATOS Y ABRIR TABLERO")
 
